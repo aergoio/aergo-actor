@@ -1,10 +1,7 @@
-[![Go Report Card](https://goreportcard.com/badge/github.com/AsynkronIT/protoactor-go)](https://goreportcard.com/report/github.com/AsynkronIT/protoactor-go) 
-[![GoDoc](https://godoc.org/github.com/AsynkronIT/protoactor-go?status.svg)](https://godoc.org/github.com/AsynkronIT/protoactor-go)
-[![Build Status](https://travis-ci.org/AsynkronIT/protoactor-go.svg?branch=dev)](https://travis-ci.org/AsynkronIT/protoactor-go)
-[![Coverage Status](https://coveralls.io/repos/github/AsynkronIT/protoactor-go/badge.svg?branch=dev)](https://coveralls.io/github/AsynkronIT/protoactor-go?branch=dev)
-[![Sourcegraph](https://sourcegraph.com/github.com/AsynkronIT/protoactor-go/-/badge.svg)](https://sourcegraph.com/github.com/AsynkronIT/protoactor-go?badge)
-
-[![Join the chat at https://gitter.im/AsynkronIT/protoactor](https://badges.gitter.im/AsynkronIT/protoactor.svg)](https://gitter.im/AsynkronIT/protoactor?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Go Report Card](https://goreportcard.com/badge/github.com/aergoio/aergo-actor)](https://goreportcard.com/report/github.com/aergoio/aergo-actor) 
+[![Build Status](https://travis-ci.org/aergoio/aergo-actor.svg?branch=develop)](https://travis-ci.org/aergoio/aergo-actor)
+[![Maintainability](https://api.codeclimate.com/v1/badges/11a4c64e60e053dc6e50/maintainability)](https://codeclimate.com/github/aergoio/aergo-actor/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/11a4c64e60e053dc6e50/test_coverage)](https://codeclimate.com/github/aergoio/aergo-actor/test_coverage)
 
 # Cross platform actors
 
