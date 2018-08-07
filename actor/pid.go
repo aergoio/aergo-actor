@@ -68,6 +68,19 @@ func (pid *PID) RequestFuture(message interface{}, timeout time.Duration) *Futur
 	return future
 }
 
+// RequestFuturePrefix sends a message to a given PID and returns a Future
+// and this internally uses the prefix to generate sender's pid for an ease of debugging
+func (pid *PID) RequestFuturePrefix(message interface{}, prefix string, timeout time.Duration) *Future {
+	future := NewFuturePrefix(prefix, timeout)
+	env := &MessageEnvelope{
+		Message: message,
+		Header:  nil,
+		Sender:  future.PID(),
+	}
+	pid.ref().SendUserMessage(pid, env)
+	return future
+}
+
 func (pid *PID) sendSystemMessage(message interface{}) {
 	pid.ref().SendSystemMessage(pid, message)
 }

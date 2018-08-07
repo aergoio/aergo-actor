@@ -13,10 +13,16 @@ var ErrTimeout = errors.New("future: timeout")
 
 // NewFuture creates and returns a new actor.Future with a timeout of duration d
 func NewFuture(d time.Duration) *Future {
+	return NewFuturePrefix("future", d)
+}
+
+// NewFuturePrefix creates and returns a new actor.Future with a timeout of duration d
+// and this generates process id using a given prefix string
+func NewFuturePrefix(prefix string, d time.Duration) *Future {
 	ref := &futureProcess{Future{cond: sync.NewCond(&sync.Mutex{})}}
 	id := ProcessRegistry.NextId()
 
-	pid, ok := ProcessRegistry.Add(ref, "future"+id)
+	pid, ok := ProcessRegistry.Add(ref, prefix+id)
 	if !ok {
 		plog.Error("failed to register future process", log.Stringer("pid", pid))
 	}
