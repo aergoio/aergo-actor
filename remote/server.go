@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/AsynkronIT/protoactor-go/actor"
-	"github.com/AsynkronIT/protoactor-go/log"
+	"github.com/aergoio/aergo-actor/actor"
+	"github.com/aergoio/aergo-actor/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
 )

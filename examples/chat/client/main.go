@@ -4,9 +4,9 @@ import (
 	"log"
 
 	"github.com/AsynkronIT/goconsole"
-	"github.com/AsynkronIT/protoactor-go/actor"
-	"github.com/AsynkronIT/protoactor-go/examples/chat/messages"
-	"github.com/AsynkronIT/protoactor-go/remote"
+	"github.com/aergoio/aergo-actor/actor"
+	"github.com/aergoio/aergo-actor/examples/chat/messages"
+	"github.com/aergoio/aergo-actor/remote"
 )
 
 func main() {

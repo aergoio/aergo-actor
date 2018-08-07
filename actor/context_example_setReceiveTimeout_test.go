@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AsynkronIT/protoactor-go/actor"
+	"github.com/aergoio/aergo-actor/actor"
 )
 
 type setReceiveTimeoutActor struct {

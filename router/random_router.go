@@ -5,7 +5,7 @@ import (
 	"sync/atomic"
 	"unsafe"
 
-	"github.com/AsynkronIT/protoactor-go/actor"
+	"github.com/aergoio/aergo-actor/actor"
 )
 
 type randomGroupRouter struct {

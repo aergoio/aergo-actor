@@ -6,12 +6,12 @@ import (
 	"time"
 
 	console "github.com/AsynkronIT/goconsole"
-	"github.com/AsynkronIT/protoactor-go/actor"
-	"github.com/AsynkronIT/protoactor-go/cluster"
-	"github.com/AsynkronIT/protoactor-go/cluster/consul"
-	"github.com/AsynkronIT/protoactor-go/eventstream"
-	"github.com/AsynkronIT/protoactor-go/examples/cluster/shared"
-	"github.com/AsynkronIT/protoactor-go/remote"
+	"github.com/aergoio/aergo-actor/actor"
+	"github.com/aergoio/aergo-actor/cluster"
+	"github.com/aergoio/aergo-actor/cluster/consul"
+	"github.com/aergoio/aergo-actor/eventstream"
+	"github.com/aergoio/aergo-actor/examples/cluster/shared"
+	"github.com/aergoio/aergo-actor/remote"
 )
 
 const (

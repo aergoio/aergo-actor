@@ -1,6 +1,6 @@
 package stream
 
-import "github.com/AsynkronIT/protoactor-go/actor"
+import "github.com/aergoio/aergo-actor/actor"
 
 type UntypedStream struct {
 	c   chan interface{}

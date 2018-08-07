@@ -4,7 +4,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/AsynkronIT/protoactor-go/log"
+	"github.com/aergoio/aergo-actor/log"
 )
 
 type guardiansValue struct {

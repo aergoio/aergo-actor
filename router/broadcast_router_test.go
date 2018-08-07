@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AsynkronIT/protoactor-go/actor"
+	"github.com/aergoio/aergo-actor/actor"
 )
 
 func TestBroadcastRouterThreadSafe(t *testing.T) {
@@ -20,7 +20,7 @@ func TestBroadcastRouterThreadSafe(t *testing.T) {
 		count := 100
 		for i := 0; i < count; i++ {
 			pid, _ := actor.SpawnNamed(props, strconv.Itoa(i))
-			grp.Tell(&AddRoutee{pid})
+			grp.Tell(&AddRoutee{PID: pid})
 			time.Sleep(10 * time.Millisecond)
 		}
 		wg.Done()

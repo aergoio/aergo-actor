@@ -4,9 +4,9 @@ import (
 	"runtime"
 
 	"github.com/AsynkronIT/goconsole"
-	"github.com/AsynkronIT/protoactor-go/actor"
-	"github.com/AsynkronIT/protoactor-go/examples/remoteactivate/messages"
-	"github.com/AsynkronIT/protoactor-go/remote"
+	"github.com/aergoio/aergo-actor/actor"
+	"github.com/aergoio/aergo-actor/examples/remoteactivate/messages"
+	"github.com/aergoio/aergo-actor/remote"
 )
 
 type helloActor struct{}

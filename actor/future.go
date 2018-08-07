@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AsynkronIT/protoactor-go/log"
+	"github.com/aergoio/aergo-actor/log"
 )
 
 // ErrTimeout is the error used when a future times out before receiving a result.

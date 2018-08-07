@@ -1,6 +1,6 @@
 package actor
 
-import "github.com/AsynkronIT/protoactor-go/eventstream"
+import "github.com/aergoio/aergo-actor/eventstream"
 
 type optionFn func()
 

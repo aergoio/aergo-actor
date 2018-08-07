@@ -3,8 +3,8 @@ package remote
 import (
 	"time"
 
-	"github.com/AsynkronIT/protoactor-go/actor"
-	"github.com/AsynkronIT/protoactor-go/log"
+	"github.com/aergoio/aergo-actor/actor"
+	"github.com/aergoio/aergo-actor/log"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

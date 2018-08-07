@@ -3,8 +3,8 @@ package cluster
 import proto "github.com/gogo/protobuf/proto"
 import fmt "fmt"
 import math "math"
+import actor "github.com/aergoio/aergo-actor/actor"
 import _ "github.com/gogo/protobuf/gogoproto"
-import actor "github.com/AsynkronIT/protoactor-go/actor"
 
 import bytes "bytes"
 
@@ -25,13 +25,43 @@ var _ = math.Inf
 const _ = proto.GoGoProtoPackageIsVersion2 // please upgrade the proto package
 
 type TakeOwnership struct {
-	Pid  *actor.PID `protobuf:"bytes,1,opt,name=pid" json:"pid,omitempty"`
-	Name string     `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Pid                  *actor.PID `protobuf:"bytes,1,opt,name=pid" json:"pid,omitempty"`
+	Name                 string     `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
+	XXX_sizecache        int32      `json:"-"`
 }
 
-func (m *TakeOwnership) Reset()                    { *m = TakeOwnership{} }
-func (*TakeOwnership) ProtoMessage()               {}
-func (*TakeOwnership) Descriptor() ([]byte, []int) { return fileDescriptorProtos, []int{0} }
+func (m *TakeOwnership) Reset()      { *m = TakeOwnership{} }
+func (*TakeOwnership) ProtoMessage() {}
+func (*TakeOwnership) Descriptor() ([]byte, []int) {
+	return fileDescriptor_protos_9ff767df9b71aa8c, []int{0}
+}
+func (m *TakeOwnership) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *TakeOwnership) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_TakeOwnership.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *TakeOwnership) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TakeOwnership.Merge(dst, src)
+}
+func (m *TakeOwnership) XXX_Size() int {
+	return m.Size()
+}
+func (m *TakeOwnership) XXX_DiscardUnknown() {
+	xxx_messageInfo_TakeOwnership.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_TakeOwnership proto.InternalMessageInfo
 
 func (m *TakeOwnership) GetPid() *actor.PID {
 	if m != nil {
@@ -40,30 +70,155 @@ func (m *TakeOwnership) GetPid() *actor.PID {
 	return nil
 }
 
-type GrainRequest struct {
-	Method      string `protobuf:"bytes,1,opt,name=method,proto3" json:"method,omitempty"`
-	MessageData []byte `protobuf:"bytes,2,opt,name=message_data,json=messageData,proto3" json:"message_data,omitempty"`
+func (m *TakeOwnership) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
 }
 
-func (m *GrainRequest) Reset()                    { *m = GrainRequest{} }
-func (*GrainRequest) ProtoMessage()               {}
-func (*GrainRequest) Descriptor() ([]byte, []int) { return fileDescriptorProtos, []int{1} }
+type GrainRequest struct {
+	Method               string   `protobuf:"bytes,1,opt,name=method,proto3" json:"method,omitempty"`
+	MessageData          []byte   `protobuf:"bytes,2,opt,name=message_data,json=messageData,proto3" json:"message_data,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *GrainRequest) Reset()      { *m = GrainRequest{} }
+func (*GrainRequest) ProtoMessage() {}
+func (*GrainRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_protos_9ff767df9b71aa8c, []int{1}
+}
+func (m *GrainRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *GrainRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_GrainRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *GrainRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GrainRequest.Merge(dst, src)
+}
+func (m *GrainRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *GrainRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_GrainRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GrainRequest proto.InternalMessageInfo
+
+func (m *GrainRequest) GetMethod() string {
+	if m != nil {
+		return m.Method
+	}
+	return ""
+}
+
+func (m *GrainRequest) GetMessageData() []byte {
+	if m != nil {
+		return m.MessageData
+	}
+	return nil
+}
 
 type GrainResponse struct {
-	MessageData []byte `protobuf:"bytes,1,opt,name=message_data,json=messageData,proto3" json:"message_data,omitempty"`
+	MessageData          []byte   `protobuf:"bytes,1,opt,name=message_data,json=messageData,proto3" json:"message_data,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *GrainResponse) Reset()                    { *m = GrainResponse{} }
-func (*GrainResponse) ProtoMessage()               {}
-func (*GrainResponse) Descriptor() ([]byte, []int) { return fileDescriptorProtos, []int{2} }
+func (m *GrainResponse) Reset()      { *m = GrainResponse{} }
+func (*GrainResponse) ProtoMessage() {}
+func (*GrainResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_protos_9ff767df9b71aa8c, []int{2}
+}
+func (m *GrainResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *GrainResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_GrainResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *GrainResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GrainResponse.Merge(dst, src)
+}
+func (m *GrainResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *GrainResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_GrainResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GrainResponse proto.InternalMessageInfo
+
+func (m *GrainResponse) GetMessageData() []byte {
+	if m != nil {
+		return m.MessageData
+	}
+	return nil
+}
 
 type GrainErrorResponse struct {
-	Err string `protobuf:"bytes,1,opt,name=err,proto3" json:"err,omitempty"`
+	Err                  string   `protobuf:"bytes,1,opt,name=err,proto3" json:"err,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *GrainErrorResponse) Reset()                    { *m = GrainErrorResponse{} }
-func (*GrainErrorResponse) ProtoMessage()               {}
-func (*GrainErrorResponse) Descriptor() ([]byte, []int) { return fileDescriptorProtos, []int{3} }
+func (m *GrainErrorResponse) Reset()      { *m = GrainErrorResponse{} }
+func (*GrainErrorResponse) ProtoMessage() {}
+func (*GrainErrorResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_protos_9ff767df9b71aa8c, []int{3}
+}
+func (m *GrainErrorResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *GrainErrorResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_GrainErrorResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *GrainErrorResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GrainErrorResponse.Merge(dst, src)
+}
+func (m *GrainErrorResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *GrainErrorResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_GrainErrorResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GrainErrorResponse proto.InternalMessageInfo
+
+func (m *GrainErrorResponse) GetErr() string {
+	if m != nil {
+		return m.Err
+	}
+	return ""
+}
 
 func init() {
 	proto.RegisterType((*TakeOwnership)(nil), "cluster.TakeOwnership")
@@ -73,10 +228,7 @@ func init() {
 }
 func (this *TakeOwnership) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*TakeOwnership)
@@ -89,10 +241,7 @@ func (this *TakeOwnership) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -106,10 +255,7 @@ func (this *TakeOwnership) Equal(that interface{}) bool {
 }
 func (this *GrainRequest) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*GrainRequest)
@@ -122,10 +268,7 @@ func (this *GrainRequest) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -139,10 +282,7 @@ func (this *GrainRequest) Equal(that interface{}) bool {
 }
 func (this *GrainResponse) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*GrainResponse)
@@ -155,10 +295,7 @@ func (this *GrainResponse) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -169,10 +306,7 @@ func (this *GrainResponse) Equal(that interface{}) bool {
 }
 func (this *GrainErrorResponse) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*GrainErrorResponse)
@@ -185,10 +319,7 @@ func (this *GrainErrorResponse) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -309,24 +440,6 @@ func (m *GrainErrorResponse) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func encodeFixed64Protos(dAtA []byte, offset int, v uint64) int {
-	dAtA[offset] = uint8(v)
-	dAtA[offset+1] = uint8(v >> 8)
-	dAtA[offset+2] = uint8(v >> 16)
-	dAtA[offset+3] = uint8(v >> 24)
-	dAtA[offset+4] = uint8(v >> 32)
-	dAtA[offset+5] = uint8(v >> 40)
-	dAtA[offset+6] = uint8(v >> 48)
-	dAtA[offset+7] = uint8(v >> 56)
-	return offset + 8
-}
-func encodeFixed32Protos(dAtA []byte, offset int, v uint32) int {
-	dAtA[offset] = uint8(v)
-	dAtA[offset+1] = uint8(v >> 8)
-	dAtA[offset+2] = uint8(v >> 16)
-	dAtA[offset+3] = uint8(v >> 24)
-	return offset + 4
-}
 func encodeVarintProtos(dAtA []byte, offset int, v uint64) int {
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
@@ -934,28 +1047,27 @@ var (
 	ErrIntOverflowProtos   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("protos.proto", fileDescriptorProtos) }
+func init() { proto.RegisterFile("protos.proto", fileDescriptor_protos_9ff767df9b71aa8c) }
 
-var fileDescriptorProtos = []byte{
-	// 307 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0x64, 0x90, 0xc1, 0x4a, 0xc3, 0x30,
-	0x18, 0xc7, 0x1b, 0x27, 0x93, 0x65, 0x1d, 0x48, 0x0e, 0x32, 0x86, 0x84, 0xb9, 0x83, 0xec, 0xe0,
-	0x5a, 0x98, 0xe0, 0x7d, 0x32, 0x91, 0x9e, 0x94, 0xb2, 0xbb, 0xa4, 0x5d, 0x6c, 0xcb, 0x6c, 0x52,
-	0x93, 0x14, 0xf1, 0xe6, 0x23, 0xf8, 0x18, 0x3e, 0x8a, 0xc7, 0x1d, 0x3d, 0xda, 0x78, 0xf1, 0xb8,
-	0x47, 0x90, 0x7d, 0x2d, 0x32, 0xd8, 0x29, 0xbf, 0xff, 0x97, 0xfc, 0xfe, 0x09, 0xc1, 0x6e, 0xa1,
-	0xa4, 0x91, 0xda, 0x83, 0x85, 0x1c, 0xc5, 0x4f, 0xa5, 0x36, 0x5c, 0x0d, 0x26, 0x49, 0x66, 0xd2,
-	0x32, 0xf2, 0x62, 0x99, 0xfb, 0x89, 0x4c, 0xa4, 0x0f, 0xfb, 0x51, 0xf9, 0x08, 0x09, 0x02, 0x50,
-	0xed, 0x0d, 0xae, 0x76, 0x8e, 0xcf, 0xf4, 0xab, 0x58, 0x29, 0x29, 0x82, 0x45, 0x2d, 0xb1, 0xd8,
-	0x48, 0x35, 0x49, 0xa4, 0x0f, 0xe0, 0xef, 0xde, 0x37, 0x9a, 0xe1, 0xde, 0x82, 0xad, 0xf8, 0xdd,
-	0x8b, 0xe0, 0x4a, 0xa7, 0x59, 0x41, 0x4e, 0x71, 0xab, 0xc8, 0x96, 0x7d, 0x34, 0x44, 0xe3, 0xee,
-	0x14, 0x7b, 0xa0, 0x78, 0xf7, 0xc1, 0x3c, 0xdc, 0x8e, 0x09, 0xc1, 0x87, 0x82, 0xe5, 0xbc, 0x7f,
-	0x30, 0x44, 0xe3, 0x4e, 0x08, 0x3c, 0x0a, 0xb0, 0x7b, 0xab, 0x58, 0x26, 0x42, 0xfe, 0x5c, 0x72,
-	0x6d, 0xc8, 0x09, 0x6e, 0xe7, 0xdc, 0xa4, 0xb2, 0x2e, 0xe9, 0x84, 0x4d, 0x22, 0x67, 0xd8, 0xcd,
-	0xb9, 0xd6, 0x2c, 0xe1, 0x0f, 0x4b, 0x66, 0x18, 0x74, 0xb8, 0x61, 0xb7, 0x99, 0xcd, 0x99, 0x61,
-	0xa3, 0x29, 0xee, 0x35, 0x55, 0xba, 0x90, 0x42, 0xf3, 0x3d, 0x07, 0xed, 0x3b, 0xe7, 0x98, 0x80,
-	0x73, 0xa3, 0x94, 0x54, 0xff, 0xe2, 0x31, 0x6e, 0x71, 0xa5, 0x9a, 0x17, 0x6c, 0xf1, 0xfa, 0x62,
-	0x5d, 0x51, 0xe7, 0xab, 0xa2, 0xce, 0xa6, 0xa2, 0xce, 0x9b, 0xa5, 0xe8, 0xc3, 0x52, 0xf4, 0x69,
-	0x29, 0x5a, 0x5b, 0x8a, 0xbe, 0x2d, 0x45, 0xbf, 0x96, 0x3a, 0x1b, 0x4b, 0xd1, 0xfb, 0x0f, 0x75,
-	0xa2, 0x36, 0x7c, 0xcf, 0xe5, 0x5f, 0x00, 0x00, 0x00, 0xff, 0xff, 0xa7, 0xd0, 0xa5, 0x29, 0x9e,
-	0x01, 0x00, 0x00,
+var fileDescriptor_protos_9ff767df9b71aa8c = []byte{
+	// 301 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x64, 0x90, 0xc1, 0x4a, 0xc3, 0x30,
+	0x1c, 0xc6, 0x1b, 0x27, 0x93, 0x65, 0x1d, 0x48, 0x0e, 0x32, 0x86, 0x84, 0xd9, 0x83, 0xec, 0xe0,
+	0x5a, 0x9c, 0x4f, 0xa0, 0x4c, 0x64, 0x27, 0xa5, 0x78, 0x97, 0xb4, 0xfb, 0xdb, 0x16, 0x6d, 0x53,
+	0xff, 0x49, 0xf1, 0xea, 0x23, 0xf8, 0x18, 0x3e, 0x8a, 0xc7, 0x1d, 0x3d, 0xda, 0x78, 0xf1, 0xb8,
+	0x47, 0x90, 0xa5, 0x45, 0x06, 0xbb, 0xe4, 0xff, 0x7d, 0x5f, 0xf2, 0xfb, 0x12, 0x42, 0xdd, 0x12,
+	0xa5, 0x96, 0xca, 0xb7, 0x83, 0x1d, 0xc4, 0xcf, 0x95, 0xd2, 0x80, 0xa3, 0x69, 0x92, 0xe9, 0xb4,
+	0x8a, 0xfc, 0x58, 0xe6, 0x41, 0x22, 0x13, 0x19, 0xd8, 0xfd, 0xa8, 0x7a, 0xb4, 0xce, 0x1a, 0xab,
+	0x1a, 0x6e, 0x74, 0xbe, 0x75, 0x5c, 0x00, 0x26, 0x32, 0x93, 0xcd, 0x9c, 0x8a, 0x58, 0x4b, 0x0c,
+	0x9a, 0x75, 0xfb, 0x2a, 0xef, 0x92, 0x0e, 0xee, 0xc5, 0x13, 0xdc, 0xbe, 0x16, 0x80, 0x2a, 0xcd,
+	0x4a, 0x76, 0x4c, 0x3b, 0x65, 0xb6, 0x1c, 0x92, 0x31, 0x99, 0xf4, 0x67, 0xd4, 0xb7, 0x88, 0x7f,
+	0xb7, 0x98, 0x87, 0x9b, 0x98, 0x31, 0xba, 0x5f, 0x88, 0x1c, 0x86, 0x7b, 0x63, 0x32, 0xe9, 0x85,
+	0x56, 0x7b, 0x0b, 0xea, 0xde, 0xa0, 0xc8, 0x8a, 0x10, 0x5e, 0x2a, 0x50, 0x9a, 0x1d, 0xd1, 0x6e,
+	0x0e, 0x3a, 0x95, 0x4d, 0x49, 0x2f, 0x6c, 0x1d, 0x3b, 0xa1, 0x6e, 0x0e, 0x4a, 0x89, 0x04, 0x1e,
+	0x96, 0x42, 0x0b, 0xdb, 0xe1, 0x86, 0xfd, 0x36, 0x9b, 0x0b, 0x2d, 0xbc, 0x19, 0x1d, 0xb4, 0x55,
+	0xaa, 0x94, 0x85, 0x82, 0x1d, 0x86, 0xec, 0x32, 0xa7, 0x94, 0x59, 0xe6, 0x1a, 0x51, 0xe2, 0x3f,
+	0x78, 0x48, 0x3b, 0x80, 0xd8, 0xbe, 0x60, 0x23, 0xaf, 0xce, 0x56, 0x35, 0x77, 0xbe, 0x6a, 0xee,
+	0xac, 0x6b, 0xee, 0xbc, 0x19, 0x4e, 0x3e, 0x0c, 0x27, 0x9f, 0x86, 0x93, 0x95, 0xe1, 0xe4, 0xdb,
+	0x70, 0xf2, 0x6b, 0xb8, 0xb3, 0x36, 0x9c, 0xbc, 0xff, 0x70, 0x27, 0xea, 0xda, 0xef, 0xb9, 0xf8,
+	0x0b, 0x00, 0x00, 0xff, 0xff, 0xe5, 0x24, 0x21, 0x72, 0x99, 0x01, 0x00, 0x00,
 }

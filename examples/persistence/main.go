@@ -6,8 +6,8 @@ import (
 	"strconv"
 
 	"github.com/AsynkronIT/goconsole"
-	"github.com/AsynkronIT/protoactor-go/actor"
-	"github.com/AsynkronIT/protoactor-go/persistence"
+	"github.com/aergoio/aergo-actor/actor"
+	"github.com/aergoio/aergo-actor/persistence"
 )
 
 type Provider struct {

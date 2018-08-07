@@ -1,7 +1,7 @@
 package protozip
 
 import (
-	"github.com/AsynkronIT/protoactor-go/actor"
+	"github.com/aergoio/aergo-actor/actor"
 )
 
 func ZipkinTracer(next actor.SenderFunc) actor.SenderFunc {

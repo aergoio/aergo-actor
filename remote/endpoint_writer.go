@@ -3,9 +3,9 @@ package remote
 import (
 	"time"
 
-	"github.com/AsynkronIT/protoactor-go/actor"
-	"github.com/AsynkronIT/protoactor-go/eventstream"
-	"github.com/AsynkronIT/protoactor-go/log"
+	"github.com/aergoio/aergo-actor/actor"
+	"github.com/aergoio/aergo-actor/eventstream"
+	"github.com/aergoio/aergo-actor/log"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -109,7 +109,7 @@ func (state *endpointWriter) sendEnvelopes(msg []interface{}, ctx actor.Context)
 		if rd.header == nil || rd.header.Length() == 0 {
 			header = nil
 		} else {
-			header = &MessageHeader{rd.header.ToMap()}
+			header = &MessageHeader{HeaderData: rd.header.ToMap()}
 		}
 
 		bytes, typeName, err := Serialize(rd.message, serializerID)

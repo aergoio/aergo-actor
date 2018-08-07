@@ -4,9 +4,9 @@ package shared
 
 import errors "errors"
 import log "log"
-import actor "github.com/AsynkronIT/protoactor-go/actor"
-import remote "github.com/AsynkronIT/protoactor-go/remote"
-import cluster "github.com/AsynkronIT/protoactor-go/cluster"
+import actor "github.com/aergoio/aergo-actor/actor"
+import remote "github.com/aergoio/aergo-actor/remote"
+import cluster "github.com/aergoio/aergo-actor/cluster"
 
 import proto "github.com/gogo/protobuf/proto"
 import fmt "fmt"

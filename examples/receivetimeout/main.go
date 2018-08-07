@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/AsynkronIT/goconsole"
-	"github.com/AsynkronIT/protoactor-go/actor"
+	"github.com/aergoio/aergo-actor/actor"
 )
 
 type NoInfluence string

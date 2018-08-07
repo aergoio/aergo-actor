@@ -5,9 +5,9 @@ import (
 	"runtime"
 
 	"github.com/AsynkronIT/goconsole"
-	"github.com/AsynkronIT/protoactor-go/actor"
-	"github.com/AsynkronIT/protoactor-go/examples/distributedchannels/messages"
-	"github.com/AsynkronIT/protoactor-go/remote"
+	"github.com/aergoio/aergo-actor/actor"
+	"github.com/aergoio/aergo-actor/examples/distributedchannels/messages"
+	"github.com/aergoio/aergo-actor/remote"
 )
 
 func newMyMessageSenderChannel() chan<- *messages.MyMessage {

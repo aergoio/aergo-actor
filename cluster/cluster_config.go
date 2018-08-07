@@ -3,7 +3,7 @@ package cluster
 import (
 	"time"
 
-	"github.com/AsynkronIT/protoactor-go/remote"
+	"github.com/aergoio/aergo-actor/remote"
 )
 
 type ClusterConfig struct {

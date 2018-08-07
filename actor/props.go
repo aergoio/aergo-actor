@@ -1,6 +1,6 @@
 package actor
 
-import "github.com/AsynkronIT/protoactor-go/mailbox"
+import "github.com/aergoio/aergo-actor/mailbox"
 
 type InboundMiddleware func(next ActorFunc) ActorFunc
 type OutboundMiddleware func(next SenderFunc) SenderFunc

@@ -1,7 +1,7 @@
 package remote
 
 import (
-	"github.com/AsynkronIT/protoactor-go/log"
+	"github.com/aergoio/aergo-actor/log"
 )
 
 var (

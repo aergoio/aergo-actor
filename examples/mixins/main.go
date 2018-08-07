@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/AsynkronIT/goconsole"
-	"github.com/AsynkronIT/protoactor-go/actor"
-	"github.com/AsynkronIT/protoactor-go/actor/middleware"
-	"github.com/AsynkronIT/protoactor-go/plugin"
+	"github.com/aergoio/aergo-actor/actor"
+	"github.com/aergoio/aergo-actor/actor/middleware"
+	"github.com/aergoio/aergo-actor/plugin"
 )
 
 type myActor struct {

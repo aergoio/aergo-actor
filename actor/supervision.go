@@ -1,6 +1,6 @@
 package actor
 
-import "github.com/AsynkronIT/protoactor-go/eventstream"
+import "github.com/aergoio/aergo-actor/eventstream"
 
 // DeciderFunc is a function which is called by a SupervisorStrategy
 type DeciderFunc func(reason interface{}) Directive

@@ -1,6 +1,6 @@
 package weighted
 
-import "github.com/AsynkronIT/protoactor-go/cluster"
+import "github.com/aergoio/aergo-actor/cluster"
 
 type WeightedMemberStrategy struct {
 	members []*cluster.MemberStatus

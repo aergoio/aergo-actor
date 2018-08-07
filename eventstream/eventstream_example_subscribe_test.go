@@ -3,7 +3,7 @@ package eventstream_test
 import (
 	"fmt"
 
-	"github.com/AsynkronIT/protoactor-go/eventstream"
+	"github.com/aergoio/aergo-actor/eventstream"
 )
 
 // Subscribe subscribes to events

@@ -3,12 +3,9 @@ package router
 import proto "github.com/gogo/protobuf/proto"
 import fmt "fmt"
 import math "math"
-import actor "github.com/AsynkronIT/protoactor-go/actor"
+import actor "github.com/aergoio/aergo-actor/actor"
 
 import strings "strings"
-import github_com_gogo_protobuf_proto "github.com/gogo/protobuf/proto"
-import sort "sort"
-import strconv "strconv"
 import reflect "reflect"
 
 import io "io"
@@ -25,12 +22,42 @@ var _ = math.Inf
 const _ = proto.GoGoProtoPackageIsVersion2 // please upgrade the proto package
 
 type AddRoutee struct {
-	PID *actor.PID `protobuf:"bytes,1,opt,name=PID" json:"PID,omitempty"`
+	PID                  *actor.PID `protobuf:"bytes,1,opt,name=PID" json:"PID,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
+	XXX_sizecache        int32      `json:"-"`
 }
 
-func (m *AddRoutee) Reset()                    { *m = AddRoutee{} }
-func (*AddRoutee) ProtoMessage()               {}
-func (*AddRoutee) Descriptor() ([]byte, []int) { return fileDescriptorProtos, []int{0} }
+func (m *AddRoutee) Reset()      { *m = AddRoutee{} }
+func (*AddRoutee) ProtoMessage() {}
+func (*AddRoutee) Descriptor() ([]byte, []int) {
+	return fileDescriptor_protos_b844a00dfa5320f6, []int{0}
+}
+func (m *AddRoutee) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *AddRoutee) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_AddRoutee.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *AddRoutee) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AddRoutee.Merge(dst, src)
+}
+func (m *AddRoutee) XXX_Size() int {
+	return m.Size()
+}
+func (m *AddRoutee) XXX_DiscardUnknown() {
+	xxx_messageInfo_AddRoutee.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_AddRoutee proto.InternalMessageInfo
 
 func (m *AddRoutee) GetPID() *actor.PID {
 	if m != nil {
@@ -40,12 +67,42 @@ func (m *AddRoutee) GetPID() *actor.PID {
 }
 
 type RemoveRoutee struct {
-	PID *actor.PID `protobuf:"bytes,1,opt,name=PID" json:"PID,omitempty"`
+	PID                  *actor.PID `protobuf:"bytes,1,opt,name=PID" json:"PID,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
+	XXX_sizecache        int32      `json:"-"`
 }
 
-func (m *RemoveRoutee) Reset()                    { *m = RemoveRoutee{} }
-func (*RemoveRoutee) ProtoMessage()               {}
-func (*RemoveRoutee) Descriptor() ([]byte, []int) { return fileDescriptorProtos, []int{1} }
+func (m *RemoveRoutee) Reset()      { *m = RemoveRoutee{} }
+func (*RemoveRoutee) ProtoMessage() {}
+func (*RemoveRoutee) Descriptor() ([]byte, []int) {
+	return fileDescriptor_protos_b844a00dfa5320f6, []int{1}
+}
+func (m *RemoveRoutee) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *RemoveRoutee) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_RemoveRoutee.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *RemoveRoutee) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RemoveRoutee.Merge(dst, src)
+}
+func (m *RemoveRoutee) XXX_Size() int {
+	return m.Size()
+}
+func (m *RemoveRoutee) XXX_DiscardUnknown() {
+	xxx_messageInfo_RemoveRoutee.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RemoveRoutee proto.InternalMessageInfo
 
 func (m *RemoveRoutee) GetPID() *actor.PID {
 	if m != nil {
@@ -55,27 +112,124 @@ func (m *RemoveRoutee) GetPID() *actor.PID {
 }
 
 type AdjustPoolSize struct {
-	Change int32 `protobuf:"varint,1,opt,name=change,proto3" json:"change,omitempty"`
+	Change               int32    `protobuf:"varint,1,opt,name=change,proto3" json:"change,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *AdjustPoolSize) Reset()                    { *m = AdjustPoolSize{} }
-func (*AdjustPoolSize) ProtoMessage()               {}
-func (*AdjustPoolSize) Descriptor() ([]byte, []int) { return fileDescriptorProtos, []int{2} }
+func (m *AdjustPoolSize) Reset()      { *m = AdjustPoolSize{} }
+func (*AdjustPoolSize) ProtoMessage() {}
+func (*AdjustPoolSize) Descriptor() ([]byte, []int) {
+	return fileDescriptor_protos_b844a00dfa5320f6, []int{2}
+}
+func (m *AdjustPoolSize) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *AdjustPoolSize) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_AdjustPoolSize.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *AdjustPoolSize) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AdjustPoolSize.Merge(dst, src)
+}
+func (m *AdjustPoolSize) XXX_Size() int {
+	return m.Size()
+}
+func (m *AdjustPoolSize) XXX_DiscardUnknown() {
+	xxx_messageInfo_AdjustPoolSize.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_AdjustPoolSize proto.InternalMessageInfo
+
+func (m *AdjustPoolSize) GetChange() int32 {
+	if m != nil {
+		return m.Change
+	}
+	return 0
+}
 
 type GetRoutees struct {
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *GetRoutees) Reset()                    { *m = GetRoutees{} }
-func (*GetRoutees) ProtoMessage()               {}
-func (*GetRoutees) Descriptor() ([]byte, []int) { return fileDescriptorProtos, []int{3} }
+func (m *GetRoutees) Reset()      { *m = GetRoutees{} }
+func (*GetRoutees) ProtoMessage() {}
+func (*GetRoutees) Descriptor() ([]byte, []int) {
+	return fileDescriptor_protos_b844a00dfa5320f6, []int{3}
+}
+func (m *GetRoutees) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *GetRoutees) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_GetRoutees.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *GetRoutees) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetRoutees.Merge(dst, src)
+}
+func (m *GetRoutees) XXX_Size() int {
+	return m.Size()
+}
+func (m *GetRoutees) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetRoutees.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetRoutees proto.InternalMessageInfo
 
 type Routees struct {
-	PIDs []*actor.PID `protobuf:"bytes,1,rep,name=PIDs" json:"PIDs,omitempty"`
+	PIDs                 []*actor.PID `protobuf:"bytes,1,rep,name=PIDs" json:"PIDs,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
+	XXX_sizecache        int32        `json:"-"`
 }
 
-func (m *Routees) Reset()                    { *m = Routees{} }
-func (*Routees) ProtoMessage()               {}
-func (*Routees) Descriptor() ([]byte, []int) { return fileDescriptorProtos, []int{4} }
+func (m *Routees) Reset()      { *m = Routees{} }
+func (*Routees) ProtoMessage() {}
+func (*Routees) Descriptor() ([]byte, []int) {
+	return fileDescriptor_protos_b844a00dfa5320f6, []int{4}
+}
+func (m *Routees) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Routees) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Routees.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *Routees) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Routees.Merge(dst, src)
+}
+func (m *Routees) XXX_Size() int {
+	return m.Size()
+}
+func (m *Routees) XXX_DiscardUnknown() {
+	xxx_messageInfo_Routees.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Routees proto.InternalMessageInfo
 
 func (m *Routees) GetPIDs() []*actor.PID {
 	if m != nil {
@@ -93,10 +247,7 @@ func init() {
 }
 func (this *AddRoutee) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*AddRoutee)
@@ -109,10 +260,7 @@ func (this *AddRoutee) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -123,10 +271,7 @@ func (this *AddRoutee) Equal(that interface{}) bool {
 }
 func (this *RemoveRoutee) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*RemoveRoutee)
@@ -139,10 +284,7 @@ func (this *RemoveRoutee) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -153,10 +295,7 @@ func (this *RemoveRoutee) Equal(that interface{}) bool {
 }
 func (this *AdjustPoolSize) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*AdjustPoolSize)
@@ -169,10 +308,7 @@ func (this *AdjustPoolSize) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -183,10 +319,7 @@ func (this *AdjustPoolSize) Equal(that interface{}) bool {
 }
 func (this *GetRoutees) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*GetRoutees)
@@ -199,10 +332,7 @@ func (this *GetRoutees) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -210,10 +340,7 @@ func (this *GetRoutees) Equal(that interface{}) bool {
 }
 func (this *Routees) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Routees)
@@ -226,10 +353,7 @@ func (this *Routees) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -305,24 +429,6 @@ func valueToGoStringProtos(v interface{}, typ string) string {
 	}
 	pv := reflect.Indirect(rv).Interface()
 	return fmt.Sprintf("func(v %v) *%v { return &v } ( %#v )", typ, typ, pv)
-}
-func extensionToGoStringProtos(m github_com_gogo_protobuf_proto.Message) string {
-	e := github_com_gogo_protobuf_proto.GetUnsafeExtensionsMap(m)
-	if e == nil {
-		return "nil"
-	}
-	s := "proto.NewUnsafeXXX_InternalExtensions(map[int32]proto.Extension{"
-	keys := make([]int, 0, len(e))
-	for k := range e {
-		keys = append(keys, int(k))
-	}
-	sort.Ints(keys)
-	ss := []string{}
-	for _, k := range keys {
-		ss = append(ss, strconv.Itoa(k)+": "+e[int32(k)].GoString())
-	}
-	s += strings.Join(ss, ",") + "})"
-	return s
 }
 func (m *AddRoutee) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
@@ -451,24 +557,6 @@ func (m *Routees) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func encodeFixed64Protos(dAtA []byte, offset int, v uint64) int {
-	dAtA[offset] = uint8(v)
-	dAtA[offset+1] = uint8(v >> 8)
-	dAtA[offset+2] = uint8(v >> 16)
-	dAtA[offset+3] = uint8(v >> 24)
-	dAtA[offset+4] = uint8(v >> 32)
-	dAtA[offset+5] = uint8(v >> 40)
-	dAtA[offset+6] = uint8(v >> 48)
-	dAtA[offset+7] = uint8(v >> 56)
-	return offset + 8
-}
-func encodeFixed32Protos(dAtA []byte, offset int, v uint32) int {
-	dAtA[offset] = uint8(v)
-	dAtA[offset+1] = uint8(v >> 8)
-	dAtA[offset+2] = uint8(v >> 16)
-	dAtA[offset+3] = uint8(v >> 24)
-	return offset + 4
-}
 func encodeVarintProtos(dAtA []byte, offset int, v uint64) int {
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
@@ -1066,24 +1154,24 @@ var (
 	ErrIntOverflowProtos   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("protos.proto", fileDescriptorProtos) }
+func init() { proto.RegisterFile("protos.proto", fileDescriptor_protos_b844a00dfa5320f6) }
 
-var fileDescriptorProtos = []byte{
-	// 250 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xe2, 0xe2, 0x29, 0x28, 0xca, 0x2f,
-	0xc9, 0x2f, 0xd6, 0x03, 0x53, 0x42, 0x6c, 0x45, 0xf9, 0xa5, 0x25, 0xa9, 0x45, 0x52, 0x66, 0xe9,
-	0x99, 0x25, 0x19, 0xa5, 0x49, 0x7a, 0xc9, 0xf9, 0xb9, 0xfa, 0x8e, 0xc5, 0x95, 0x79, 0xd9, 0x45,
-	0xf9, 0x79, 0x9e, 0x21, 0xfa, 0x60, 0x45, 0x89, 0xc9, 0x25, 0xf9, 0x45, 0xba, 0xe9, 0xf9, 0xfa,
-	0x60, 0x86, 0x3e, 0xb2, 0x7e, 0x25, 0x4d, 0x2e, 0x4e, 0xc7, 0x94, 0x94, 0x20, 0x90, 0x21, 0xa9,
-	0x42, 0x32, 0x5c, 0xcc, 0x01, 0x9e, 0x2e, 0x12, 0x8c, 0x0a, 0x8c, 0x1a, 0xdc, 0x46, 0x5c, 0x7a,
-	0x60, 0xe5, 0x7a, 0x01, 0x9e, 0x2e, 0x41, 0x20, 0x61, 0x25, 0x1d, 0x2e, 0x9e, 0xa0, 0xd4, 0xdc,
-	0xfc, 0xb2, 0x54, 0xa2, 0x54, 0x6b, 0x70, 0xf1, 0x39, 0xa6, 0x64, 0x95, 0x16, 0x97, 0x04, 0xe4,
-	0xe7, 0xe7, 0x04, 0x67, 0x56, 0xa5, 0x0a, 0x89, 0x71, 0xb1, 0x25, 0x67, 0x24, 0xe6, 0xa5, 0xa7,
-	0x82, 0xb5, 0xb0, 0x06, 0x41, 0x79, 0x4a, 0x3c, 0x5c, 0x5c, 0xee, 0xa9, 0x25, 0x10, 0x43, 0x8b,
-	0x95, 0x34, 0xb9, 0xd8, 0xa1, 0x4c, 0x21, 0x39, 0x2e, 0x96, 0x00, 0x4f, 0x97, 0x62, 0x09, 0x46,
-	0x05, 0x66, 0x34, 0x1b, 0xc0, 0xe2, 0x4e, 0x3a, 0x17, 0x1e, 0xca, 0x31, 0xdc, 0x78, 0x28, 0xc7,
-	0xf0, 0xe1, 0xa1, 0x1c, 0x63, 0xc3, 0x23, 0x39, 0xc6, 0x15, 0x8f, 0xe4, 0x18, 0x4f, 0x3c, 0x92,
-	0x63, 0xbc, 0xf0, 0x48, 0x8e, 0xf1, 0xc1, 0x23, 0x39, 0xc6, 0x17, 0x8f, 0xe4, 0x18, 0x3e, 0x3c,
-	0x92, 0x63, 0x9c, 0xf0, 0x58, 0x8e, 0x21, 0x89, 0x0d, 0xec, 0x61, 0x63, 0x40, 0x00, 0x00, 0x00,
-	0xff, 0xff, 0x35, 0xa2, 0x60, 0x23, 0x40, 0x01, 0x00, 0x00,
+var fileDescriptor_protos_b844a00dfa5320f6 = []byte{
+	// 242 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x29, 0x28, 0xca, 0x2f,
+	0xc9, 0x2f, 0xd6, 0x03, 0x53, 0x42, 0x6c, 0x45, 0xf9, 0xa5, 0x25, 0xa9, 0x45, 0x52, 0x86, 0xe9,
+	0x99, 0x25, 0x19, 0xa5, 0x49, 0x7a, 0xc9, 0xf9, 0xb9, 0xfa, 0x89, 0xa9, 0x45, 0xe9, 0xf9, 0x99,
+	0xf9, 0x10, 0x5a, 0x37, 0x31, 0xb9, 0x24, 0xbf, 0x48, 0x1f, 0x42, 0x22, 0x6b, 0x55, 0xd2, 0xe4,
+	0xe2, 0x74, 0x4c, 0x49, 0x09, 0x02, 0xe9, 0x4f, 0x15, 0x92, 0xe1, 0x62, 0x0e, 0xf0, 0x74, 0x91,
+	0x60, 0x54, 0x60, 0xd4, 0xe0, 0x36, 0xe2, 0xd2, 0x03, 0x2b, 0xd7, 0x0b, 0xf0, 0x74, 0x09, 0x02,
+	0x09, 0x2b, 0xe9, 0x70, 0xf1, 0x04, 0xa5, 0xe6, 0xe6, 0x97, 0xa5, 0x12, 0xa5, 0x5a, 0x83, 0x8b,
+	0xcf, 0x31, 0x25, 0xab, 0xb4, 0xb8, 0x24, 0x20, 0x3f, 0x3f, 0x27, 0x38, 0xb3, 0x2a, 0x55, 0x48,
+	0x8c, 0x8b, 0x2d, 0x39, 0x23, 0x31, 0x2f, 0x3d, 0x15, 0xac, 0x85, 0x35, 0x08, 0xca, 0x53, 0xe2,
+	0xe1, 0xe2, 0x72, 0x4f, 0x2d, 0x81, 0x18, 0x5a, 0xac, 0xa4, 0xc9, 0xc5, 0x0e, 0x65, 0x0a, 0xc9,
+	0x71, 0xb1, 0x04, 0x78, 0xba, 0x14, 0x4b, 0x30, 0x2a, 0x30, 0xa3, 0xd9, 0x00, 0x16, 0x77, 0xd2,
+	0xb9, 0xf0, 0x50, 0x8e, 0xe1, 0xc6, 0x43, 0x39, 0x86, 0x0f, 0x0f, 0xe5, 0x18, 0x1b, 0x1e, 0xc9,
+	0x31, 0xae, 0x78, 0x24, 0xc7, 0x78, 0xe2, 0x91, 0x1c, 0xe3, 0x85, 0x47, 0x72, 0x8c, 0x0f, 0x1e,
+	0xc9, 0x31, 0xbe, 0x78, 0x24, 0xc7, 0xf0, 0xe1, 0x91, 0x1c, 0xe3, 0x84, 0xc7, 0x72, 0x0c, 0x49,
+	0x6c, 0x60, 0x0f, 0x1b, 0x03, 0x02, 0x00, 0x00, 0xff, 0xff, 0xb0, 0x5a, 0x44, 0x41, 0x3b, 0x01,
+	0x00, 0x00,
 }

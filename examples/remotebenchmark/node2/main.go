@@ -5,10 +5,10 @@ import (
 	"runtime"
 
 	"github.com/AsynkronIT/goconsole"
-	"github.com/AsynkronIT/protoactor-go/actor"
-	"github.com/AsynkronIT/protoactor-go/examples/remotebenchmark/messages"
-	"github.com/AsynkronIT/protoactor-go/mailbox"
-	"github.com/AsynkronIT/protoactor-go/remote"
+	"github.com/aergoio/aergo-actor/actor"
+	"github.com/aergoio/aergo-actor/examples/remotebenchmark/messages"
+	"github.com/aergoio/aergo-actor/mailbox"
+	"github.com/aergoio/aergo-actor/remote"
 )
 
 func main() {

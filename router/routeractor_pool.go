@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AsynkronIT/protoactor-go/actor"
+	"github.com/aergoio/aergo-actor/actor"
 )
 
 type poolRouterActor struct {
@@ -63,6 +63,6 @@ func (a *poolRouterActor) Receive(context actor.Context) {
 			routees[i] = &pid
 		})
 
-		context.Respond(&Routees{routees})
+		context.Respond(&Routees{PIDs: routees})
 	}
 }

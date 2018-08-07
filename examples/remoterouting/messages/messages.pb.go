@@ -3,12 +3,9 @@ package messages
 import proto "github.com/gogo/protobuf/proto"
 import fmt "fmt"
 import math "math"
-import _ "github.com/AsynkronIT/protoactor-go/actor"
+import _ "github.com/aergoio/aergo-actor/actor"
 
 import strings "strings"
-import github_com_gogo_protobuf_proto "github.com/gogo/protobuf/proto"
-import sort "sort"
-import strconv "strconv"
 import reflect "reflect"
 
 import io "io"
@@ -25,19 +22,86 @@ var _ = math.Inf
 const _ = proto.GoGoProtoPackageIsVersion2 // please upgrade the proto package
 
 type Ping struct {
-	User string `protobuf:"bytes,1,opt,name=User,proto3" json:"User,omitempty"`
+	User                 string   `protobuf:"bytes,1,opt,name=User,proto3" json:"User,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *Ping) Reset()                    { *m = Ping{} }
-func (*Ping) ProtoMessage()               {}
-func (*Ping) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{0} }
+func (m *Ping) Reset()      { *m = Ping{} }
+func (*Ping) ProtoMessage() {}
+func (*Ping) Descriptor() ([]byte, []int) {
+	return fileDescriptor_messages_b7ba9d9c17b04909, []int{0}
+}
+func (m *Ping) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Ping) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Ping.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *Ping) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Ping.Merge(dst, src)
+}
+func (m *Ping) XXX_Size() int {
+	return m.Size()
+}
+func (m *Ping) XXX_DiscardUnknown() {
+	xxx_messageInfo_Ping.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Ping proto.InternalMessageInfo
+
+func (m *Ping) GetUser() string {
+	if m != nil {
+		return m.User
+	}
+	return ""
+}
 
 type Pong struct {
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *Pong) Reset()                    { *m = Pong{} }
-func (*Pong) ProtoMessage()               {}
-func (*Pong) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{1} }
+func (m *Pong) Reset()      { *m = Pong{} }
+func (*Pong) ProtoMessage() {}
+func (*Pong) Descriptor() ([]byte, []int) {
+	return fileDescriptor_messages_b7ba9d9c17b04909, []int{1}
+}
+func (m *Pong) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Pong) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Pong.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *Pong) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Pong.Merge(dst, src)
+}
+func (m *Pong) XXX_Size() int {
+	return m.Size()
+}
+func (m *Pong) XXX_DiscardUnknown() {
+	xxx_messageInfo_Pong.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Pong proto.InternalMessageInfo
 
 func init() {
 	proto.RegisterType((*Ping)(nil), "messages.Ping")
@@ -45,10 +109,7 @@ func init() {
 }
 func (this *Ping) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Ping)
@@ -61,10 +122,7 @@ func (this *Ping) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -75,10 +133,7 @@ func (this *Ping) Equal(that interface{}) bool {
 }
 func (this *Pong) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Pong)
@@ -91,10 +146,7 @@ func (this *Pong) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -126,24 +178,6 @@ func valueToGoStringMessages(v interface{}, typ string) string {
 	}
 	pv := reflect.Indirect(rv).Interface()
 	return fmt.Sprintf("func(v %v) *%v { return &v } ( %#v )", typ, typ, pv)
-}
-func extensionToGoStringMessages(m github_com_gogo_protobuf_proto.Message) string {
-	e := github_com_gogo_protobuf_proto.GetUnsafeExtensionsMap(m)
-	if e == nil {
-		return "nil"
-	}
-	s := "proto.NewUnsafeXXX_InternalExtensions(map[int32]proto.Extension{"
-	keys := make([]int, 0, len(e))
-	for k := range e {
-		keys = append(keys, int(k))
-	}
-	sort.Ints(keys)
-	ss := []string{}
-	for _, k := range keys {
-		ss = append(ss, strconv.Itoa(k)+": "+e[int32(k)].GoString())
-	}
-	s += strings.Join(ss, ",") + "})"
-	return s
 }
 func (m *Ping) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
@@ -187,24 +221,6 @@ func (m *Pong) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func encodeFixed64Messages(dAtA []byte, offset int, v uint64) int {
-	dAtA[offset] = uint8(v)
-	dAtA[offset+1] = uint8(v >> 8)
-	dAtA[offset+2] = uint8(v >> 16)
-	dAtA[offset+3] = uint8(v >> 24)
-	dAtA[offset+4] = uint8(v >> 32)
-	dAtA[offset+5] = uint8(v >> 40)
-	dAtA[offset+6] = uint8(v >> 48)
-	dAtA[offset+7] = uint8(v >> 56)
-	return offset + 8
-}
-func encodeFixed32Messages(dAtA []byte, offset int, v uint32) int {
-	dAtA[offset] = uint8(v)
-	dAtA[offset+1] = uint8(v >> 8)
-	dAtA[offset+2] = uint8(v >> 16)
-	dAtA[offset+3] = uint8(v >> 24)
-	return offset + 4
-}
 func encodeVarintMessages(dAtA []byte, offset int, v uint64) int {
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
@@ -504,19 +520,19 @@ var (
 	ErrIntOverflowMessages   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("messages.proto", fileDescriptorMessages) }
+func init() { proto.RegisterFile("messages.proto", fileDescriptor_messages_b7ba9d9c17b04909) }
 
-var fileDescriptorMessages = []byte{
-	// 171 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xe2, 0xe2, 0xcb, 0x4d, 0x2d, 0x2e,
-	0x4e, 0x4c, 0x4f, 0x2d, 0xd6, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x80, 0xf1, 0xa5, 0xcc,
-	0xd2, 0x33, 0x4b, 0x32, 0x4a, 0x93, 0xf4, 0x92, 0xf3, 0x73, 0xf5, 0x1d, 0x8b, 0x2b, 0xf3, 0xb2,
-	0x8b, 0xf2, 0xf3, 0x3c, 0x43, 0xf4, 0xc1, 0xca, 0x12, 0x93, 0x4b, 0xf2, 0x8b, 0x74, 0xd3, 0xf3,
-	0xf5, 0xc1, 0x0c, 0x88, 0x18, 0xd4, 0x04, 0x25, 0x29, 0x2e, 0x96, 0x80, 0xcc, 0xbc, 0x74, 0x21,
-	0x21, 0x2e, 0x96, 0xd0, 0xe2, 0xd4, 0x22, 0x09, 0x46, 0x05, 0x46, 0x0d, 0xce, 0x20, 0x30, 0x5b,
-	0x89, 0x8d, 0x8b, 0x25, 0x20, 0x3f, 0x2f, 0xdd, 0x49, 0xe7, 0xc2, 0x43, 0x39, 0x86, 0x1b, 0x0f,
-	0xe5, 0x18, 0x3e, 0x3c, 0x94, 0x63, 0x6c, 0x78, 0x24, 0xc7, 0xb8, 0xe2, 0x91, 0x1c, 0xe3, 0x89,
-	0x47, 0x72, 0x8c, 0x17, 0x1e, 0xc9, 0x31, 0x3e, 0x78, 0x24, 0xc7, 0xf8, 0xe2, 0x91, 0x1c, 0xc3,
-	0x87, 0x47, 0x72, 0x8c, 0x13, 0x1e, 0xcb, 0x31, 0x24, 0xb1, 0x81, 0x0d, 0x36, 0x06, 0x04, 0x00,
-	0x00, 0xff, 0xff, 0x7e, 0xe1, 0x3f, 0xfc, 0xac, 0x00, 0x00, 0x00,
+var fileDescriptor_messages_b7ba9d9c17b04909 = []byte{
+	// 165 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0xcb, 0x4d, 0x2d, 0x2e,
+	0x4e, 0x4c, 0x4f, 0x2d, 0xd6, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x80, 0xf1, 0xa5, 0x0c,
+	0xd3, 0x33, 0x4b, 0x32, 0x4a, 0x93, 0xf4, 0x92, 0xf3, 0x73, 0xf5, 0x13, 0x53, 0x8b, 0xd2, 0xf3,
+	0x33, 0xf3, 0x21, 0xb4, 0x6e, 0x62, 0x72, 0x49, 0x7e, 0x91, 0x3e, 0x84, 0x04, 0xeb, 0x82, 0x6a,
+	0x56, 0x92, 0xe2, 0x62, 0x09, 0xc8, 0xcc, 0x4b, 0x17, 0x12, 0xe2, 0x62, 0x09, 0x2d, 0x4e, 0x2d,
+	0x92, 0x60, 0x54, 0x60, 0xd4, 0xe0, 0x0c, 0x02, 0xb3, 0x95, 0xd8, 0xb8, 0x58, 0x02, 0xf2, 0xf3,
+	0xd2, 0x9d, 0x74, 0x2e, 0x3c, 0x94, 0x63, 0xb8, 0xf1, 0x50, 0x8e, 0xe1, 0xc3, 0x43, 0x39, 0xc6,
+	0x86, 0x47, 0x72, 0x8c, 0x2b, 0x1e, 0xc9, 0x31, 0x9e, 0x78, 0x24, 0xc7, 0x78, 0xe1, 0x91, 0x1c,
+	0xe3, 0x83, 0x47, 0x72, 0x8c, 0x2f, 0x1e, 0xc9, 0x31, 0x7c, 0x78, 0x24, 0xc7, 0x38, 0xe1, 0xb1,
+	0x1c, 0x43, 0x12, 0x1b, 0xd8, 0x60, 0x63, 0x40, 0x00, 0x00, 0x00, 0xff, 0xff, 0x05, 0xaf, 0x53,
+	0xb1, 0xa7, 0x00, 0x00, 0x00,
 }

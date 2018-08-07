@@ -4,8 +4,8 @@ import (
 	"log"
 
 	"github.com/AsynkronIT/goconsole"
-	"github.com/AsynkronIT/protoactor-go/actor"
-	"github.com/AsynkronIT/protoactor-go/router"
+	"github.com/aergoio/aergo-actor/actor"
+	"github.com/aergoio/aergo-actor/router"
 )
 
 type workItem struct{ i int }

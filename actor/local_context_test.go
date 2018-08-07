@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AsynkronIT/protoactor-go/eventstream"
+	"github.com/aergoio/aergo-actor/eventstream"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

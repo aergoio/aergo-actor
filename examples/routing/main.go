@@ -6,8 +6,8 @@ import (
 	"time"
 
 	console "github.com/AsynkronIT/goconsole"
-	"github.com/AsynkronIT/protoactor-go/actor"
-	"github.com/AsynkronIT/protoactor-go/router"
+	"github.com/aergoio/aergo-actor/actor"
+	"github.com/aergoio/aergo-actor/router"
 )
 
 type myMessage struct{ i int }

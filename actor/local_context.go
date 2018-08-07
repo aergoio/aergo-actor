@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/AsynkronIT/protoactor-go/log"
+	"github.com/aergoio/aergo-actor/log"
 	"github.com/emirpasic/gods/stacks/linkedliststack"
 )
 

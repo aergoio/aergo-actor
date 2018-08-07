@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	actor "github.com/AsynkronIT/protoactor-go/actor"
-	"github.com/AsynkronIT/protoactor-go/router"
+	actor "github.com/aergoio/aergo-actor/actor"
+	"github.com/aergoio/aergo-actor/router"
 )
 
 type myMessage struct {
@@ -56,13 +56,13 @@ func (state *managerActor) Receive(context actor.Context) {
 		state.set = msg.PIDs
 		for i, v := range state.set {
 			if i%2 == 0 {
-				state.rpid.Tell(&router.RemoveRoutee{v})
+				state.rpid.Tell(&router.RemoveRoutee{PID: v})
 				//log.Println(v)
 
 			} else {
 				props := actor.FromProducer(func() actor.Actor { return &routerActor{} })
 				pid := actor.Spawn(props)
-				state.rpid.Tell(&router.AddRoutee{pid})
+				state.rpid.Tell(&router.AddRoutee{PID: pid})
 				//log.Println(v)
 			}
 		}

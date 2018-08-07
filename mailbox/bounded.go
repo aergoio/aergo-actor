@@ -1,7 +1,7 @@
 package mailbox
 
 import (
-	"github.com/AsynkronIT/protoactor-go/internal/queue/mpsc"
+	"github.com/aergoio/aergo-actor/internal/queue/mpsc"
 	rbqueue "github.com/Workiva/go-datastructures/queue"
 )
 

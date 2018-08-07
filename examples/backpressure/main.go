@@ -6,8 +6,8 @@ import (
 	"time"
 
 	console "github.com/AsynkronIT/goconsole"
-	"github.com/AsynkronIT/protoactor-go/actor"
-	"github.com/AsynkronIT/protoactor-go/mailbox"
+	"github.com/aergoio/aergo-actor/actor"
+	"github.com/aergoio/aergo-actor/mailbox"
 )
 
 //sent to producer to request more work

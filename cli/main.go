@@ -11,8 +11,8 @@ import (
 	"github.com/chzyer/readline"
 
 	"encoding/json"
-	"github.com/AsynkronIT/protoactor-go/actor"
-	"github.com/AsynkronIT/protoactor-go/remote"
+	"github.com/aergoio/aergo-actor/actor"
+	"github.com/aergoio/aergo-actor/remote"
 	proto "github.com/gogo/protobuf/proto"
 )
 
