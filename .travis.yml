@@ -1,4 +1,8 @@
 language: go
+
+go:
+  - "1.10.x"
+
 before_install:
   - go get -v github.com/golang/lint/golint
   - go get github.com/AsynkronIT/gonet
@@ -19,6 +23,13 @@ before_install:
   - go get google.golang.org/grpc
   - go get github.com/gogo/protobuf/protoc-gen-gogoslick
   - go get github.com/chzyer/readline
+  - go get -t github.com/codeclimate/test-reporter
 
+before_script:
+  - test-reporter before-build
+  
 script:
-  - go test ./... -short
+  - go test -short -coverprofile c.out ./...
+
+after_script:
+  - test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
