@@ -101,7 +101,9 @@ func (m *defaultMailbox) run() {
 
 	defer func() {
 		if r := recover(); r != nil {
-			plog.Debug("[ACTOR] Recovering", log.Object("actor", m.invoker), log.Object("reason", r), log.Stack())
+			plog.Error("[Actor] Recovering from panic", log.Object("reason", r), log.Object("msg", msg),
+				log.Object("receiver", m.invoker), log.Stack())
+
 			m.invoker.EscalateFailure(r, msg)
 		}
 	}()
