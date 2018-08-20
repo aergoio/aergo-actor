@@ -30,7 +30,7 @@ type endpointManagerValue struct {
 }
 
 func startEndpointManager(config *remoteConfig) {
-	plog.Debug("Started EndpointManager")
+	plog.Debug().Msg("Started EndpointManager")
 
 	props := actor.FromProducer(newEndpointSupervisor).
 		WithGuardian(actor.RestartingSupervisorStrategy()).
@@ -60,7 +60,7 @@ func stopEndpointManager() {
 	endpointManager.endpointSupervisor.GracefulStop()
 	endpointManager.endpointSub = nil
 	endpointManager.connections = nil
-	plog.Debug("Stopped EndpointManager")
+	plog.Debug().Msg("Stopped EndpointManager")
 }
 
 func (em *endpointManagerValue) endpointEvent(evn interface{}) {

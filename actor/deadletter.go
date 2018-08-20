@@ -2,7 +2,6 @@ package actor
 
 import (
 	"github.com/aergoio/aergo-actor/eventstream"
-	"github.com/aergoio/aergo-actor/log"
 )
 
 type deadLetterProcess struct{}
@@ -15,8 +14,8 @@ var (
 func init() {
 	deadLetterSubscriber = eventstream.Subscribe(func(msg interface{}) {
 		if deadLetter, ok := msg.(*DeadLetterEvent); ok {
-			plog.Debug("[DeadLetter]", log.Stringer("dead_receiver", deadLetter.PID),
-				log.Message(deadLetter.Message), log.Stringer("sender", deadLetter.Sender))
+			plog.Warn().Interface("dead_receiver", deadLetter.PID).
+				Interface("msg", deadLetter.Message).Interface("sender", deadLetter.Sender).Msg("DeadLetter")
 		}
 	})
 

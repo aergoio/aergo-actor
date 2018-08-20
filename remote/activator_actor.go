@@ -3,10 +3,10 @@ package remote
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/aergoio/aergo-actor/actor"
-	"github.com/aergoio/aergo-actor/log"
 )
 
 var (
@@ -102,7 +102,7 @@ func newActivatorActor() actor.Producer {
 func (*activator) Receive(context actor.Context) {
 	switch msg := context.Message().(type) {
 	case *actor.Started:
-		plog.Debug("Started Activator")
+		plog.Debug().Msg("Started Activator")
 	case *ActorPidRequest:
 		props := nameLookup[msg.Kind]
 		name := msg.Name
@@ -141,6 +141,7 @@ func (*activator) Receive(context actor.Context) {
 	case actor.SystemMessage, actor.AutoReceiveMessage:
 		//ignore
 	default:
-		plog.Error("Activator received unknown message", log.TypeOf("type", msg), log.Message(msg))
+		plog.Error().Str("type", reflect.TypeOf(msg).String()).Interface("msg", msg).
+			Msg("Activator received unknown message")
 	}
 }

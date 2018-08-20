@@ -1,9 +1,10 @@
 package cluster
 
 import (
+	"reflect"
+
 	"github.com/aergoio/aergo-actor/actor"
 	"github.com/aergoio/aergo-actor/eventstream"
-	"github.com/aergoio/aergo-actor/log"
 	"github.com/aergoio/aergo-actor/remote"
 )
 
@@ -81,7 +82,7 @@ func newPartitionActor(kind string) actor.Producer {
 func (state *partitionActor) Receive(context actor.Context) {
 	switch msg := context.Message().(type) {
 	case *actor.Started:
-		plog.Info("Started", log.String("kind", state.kind), log.String("id", context.Self().Id))
+		plog.Info().Str("kind", state.kind).Str("id", context.Self().Id).Msg("Started")
 	case *remote.ActorPidRequest:
 		state.spawn(msg, context)
 	case *actor.Terminated:
@@ -95,13 +96,14 @@ func (state *partitionActor) Receive(context actor.Context) {
 	case *MemberLeftEvent:
 		state.memberLeft(msg, context)
 	case *MemberAvailableEvent:
-		plog.Info("Member available", log.String("kind", state.kind), log.String("name", msg.Name()))
+		plog.Info().Str("kind", state.kind).Str("name", msg.Name()).Msg("Member available")
 	case *MemberUnavailableEvent:
-		plog.Info("Member unavailable", log.String("kind", state.kind), log.String("name", msg.Name()))
+		plog.Info().Str("kind", state.kind).Str("name", msg.Name()).Msg("Member unavailable")
 	case actor.SystemMessage, actor.AutoReceiveMessage:
 		//ignore
 	default:
-		plog.Error("Partition got unknown message", log.String("kind", state.kind), log.TypeOf("type", msg), log.Object("msg", msg))
+		plog.Error().Str("kind", state.kind).Str("type", reflect.TypeOf(msg).String()).
+			Interface("msg", msg).Msg("Partition got unknown message")
 	}
 }
 
@@ -185,7 +187,7 @@ func (state *partitionActor) spawning(msg *remote.ActorPidRequest, activator str
 
 	pidResp, err := remote.SpawnNamed(activator, msg.Name, msg.Kind, cfg.TimeoutTime)
 	if err != nil {
-		plog.Error("Partition failed to spawn actor", log.String("name", msg.Name), log.String("kind", msg.Kind), log.String("address", activator), log.Error(err))
+		plog.Error().Str("name", msg.Name).Str("kind", msg.Kind).Str("address", activator).Err(err).Msg("Partition failed to spawn actor")
 		if err == actor.ErrTimeout {
 			fPid.Tell(remote.ActorPidRespTimeout)
 		} else {
@@ -216,7 +218,7 @@ func (state *partitionActor) memberRejoined(msg *MemberRejoinedEvent) {
 
 	memberAddress := msg.Name()
 
-	plog.Info("Member rejoined", log.String("kind", state.kind), log.String("name", memberAddress))
+	plog.Info().Str("kind", state.kind).Str("name", memberAddress).Msg("Member rejoined")
 
 	for actorID, pid := range state.partition {
 		//if the mapped PID is on the address that left, forget it
@@ -239,7 +241,7 @@ func (state *partitionActor) memberLeft(msg *MemberLeftEvent, context actor.Cont
 
 	memberAddress := msg.Name()
 
-	plog.Info("Member left", log.String("kind", state.kind), log.String("name", memberAddress))
+	plog.Info().Str("kind", state.kind).Str("name", memberAddress).Msg("Member left")
 
 	//If the left member is self, transfer remaining pids to others
 	if actor.ProcessRegistry.Address == memberAddress {
@@ -269,7 +271,7 @@ func (state *partitionActor) memberLeft(msg *MemberLeftEvent, context actor.Cont
 }
 
 func (state *partitionActor) memberJoined(msg *MemberJoinedEvent, context actor.Context) {
-	plog.Info("Member joined", log.String("kind", state.kind), log.String("name", msg.Name()))
+	plog.Info().Str("kind", state.kind).Str("name", msg.Name()).Msg("Member joined")
 	for actorID := range state.partition {
 		address := memberList.getPartitionMember(actorID, state.kind)
 		if address != "" && address != actor.ProcessRegistry.Address {

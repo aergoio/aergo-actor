@@ -1,11 +1,12 @@
 package mailbox
 
 import (
+	"fmt"
 	"runtime"
 	"sync/atomic"
 
 	"github.com/aergoio/aergo-actor/internal/queue/mpsc"
-	"github.com/aergoio/aergo-actor/log"
+	"github.com/aergoio/aergo-lib/log"
 )
 
 type Statistics interface {
@@ -101,8 +102,8 @@ func (m *defaultMailbox) run() {
 
 	defer func() {
 		if r := recover(); r != nil {
-			plog.Error("[Actor] Recovering from panic", log.Object("reason", r), log.Object("msg", msg),
-				log.Object("receiver", m.invoker), log.Stack())
+			plog.Error().Interface("reason", r).Interface("msg", msg).Str("receiver", fmt.Sprintf("%s", m.invoker)).
+				Str("panic_at", log.SkipCaller(4)).Msg("Recovering from panic")
 
 			m.invoker.EscalateFailure(r, msg)
 		}

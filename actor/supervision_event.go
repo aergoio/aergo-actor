@@ -1,8 +1,9 @@
 package actor
 
 import (
+	"fmt"
+
 	"github.com/aergoio/aergo-actor/eventstream"
-	"github.com/aergoio/aergo-actor/log"
 )
 
 //SupervisorEvent is sent on the EventStream when a supervisor have applied a directive to a failing child actor
@@ -19,7 +20,8 @@ var (
 func init() {
 	supervisionSubscriber = eventstream.Subscribe(func(evt interface{}) {
 		if supervisorEvent, ok := evt.(*SupervisorEvent); ok {
-			plog.Debug("[SUPERVISION]", log.Stringer("actor", supervisorEvent.Child), log.Stringer("directive", supervisorEvent.Directive), log.Object("reason", supervisorEvent.Reason))
+			plog.Debug().Interface("reason", supervisorEvent.Reason).Interface("receiver", supervisorEvent.Child).
+				Interface("directive", fmt.Stringer(supervisorEvent.Directive).String()).Msg("Supervisor handles a failing child")
 		}
 	})
 }

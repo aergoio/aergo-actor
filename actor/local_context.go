@@ -4,7 +4,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/aergoio/aergo-actor/log"
 	"github.com/emirpasic/gods/stacks/linkedliststack"
 )
 
@@ -103,7 +102,7 @@ func (ctx *localContext) Tell(pid *PID, message interface{}) {
 func (ctx *localContext) Forward(pid *PID) {
 	if msg, ok := ctx.Message().(SystemMessage); ok {
 		// SystemMessage cannot be forwarded
-		plog.Error("SystemMessage cannot be forwarded", log.Message(msg))
+		plog.Error().Interface("msg", msg).Msg("SystemMessage cannot be forwarded")
 		return
 	}
 	ctx.sendUserMessage(pid, ctx.message)
@@ -310,7 +309,7 @@ func (ctx *localContext) InvokeSystemMessage(message interface{}) {
 	case *Restart:
 		ctx.handleRestart(msg)
 	default:
-		plog.Error("unknown system message", log.Message(msg))
+		plog.Error().Interface("msg", msg).Msg("Unknown system message")
 	}
 }
 

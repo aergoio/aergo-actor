@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/aergoio/aergo-actor/actor"
-	"github.com/aergoio/aergo-actor/log"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -32,7 +31,7 @@ func (s *endpointReader) Receive(stream Remoting_ReceiveServer) error {
 
 		batch, err := stream.Recv()
 		if err != nil {
-			plog.Debug("EndpointReader failed to read", log.Error(err))
+			plog.Debug().Err(err).Msg("EndpointReader failed to read")
 			return err
 		}
 
@@ -49,7 +48,7 @@ func (s *endpointReader) Receive(stream Remoting_ReceiveServer) error {
 			pid := targets[envelope.Target]
 			message, err := Deserialize(envelope.MessageData, batch.TypeNames[envelope.TypeId], envelope.SerializerId)
 			if err != nil {
-				plog.Debug("EndpointReader failed to deserialize", log.Error(err))
+				plog.Debug().Err(err).Msg("EndpointReader failed to deserialize")
 				return err
 			}
 			//if message is system message send it as sysmsg instead of usermsg

@@ -224,3 +224,9 @@ FakesAssemblies/
 
 # Visual Studio 6 workspace options file
 *.opt
+
+# glide
+/vender
+
+# ide
+.vscode

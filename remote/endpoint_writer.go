@@ -1,11 +1,11 @@
 package remote
 
 import (
+	reflect "reflect"
 	"time"
 
 	"github.com/aergoio/aergo-actor/actor"
 	"github.com/aergoio/aergo-actor/eventstream"
-	"github.com/aergoio/aergo-actor/log"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -30,7 +30,7 @@ type endpointWriter struct {
 func (state *endpointWriter) initialize() {
 	err := state.initializeInternal()
 	if err != nil {
-		plog.Error("EndpointWriter failed to connect", log.String("address", state.address), log.Error(err))
+		plog.Error().Err(err).Str("address", state.address).Msg("EndpointWriter failed to connect")
 		//Wait 2 seconds to restart and retry
 		//Replace with Exponential Backoff
 		time.Sleep(2 * time.Second)
@@ -39,8 +39,8 @@ func (state *endpointWriter) initialize() {
 }
 
 func (state *endpointWriter) initializeInternal() error {
-	plog.Info("Started EndpointWriter", log.String("address", state.address))
-	plog.Info("EndpointWriter connecting", log.String("address", state.address))
+	plog.Info().Str("address", state.address).Msg("Started EndpointWriter")
+	plog.Info().Str("address", state.address).Msg("EndpointWriter connecting")
 	conn, err := grpc.Dial(state.address, state.config.dialOptions...)
 	if err != nil {
 		return err
@@ -61,7 +61,7 @@ func (state *endpointWriter) initializeInternal() error {
 	go func() {
 		_, err := stream.Recv()
 		if err != nil {
-			plog.Info("EndpointWriter lost connection to address", log.String("address", state.address), log.Error(err))
+			plog.Info().Err(err).Str("address", state.address).Msg("EndpointWriter lost connection to address")
 
 			//notify that the endpoint terminated
 			terminated := &EndpointTerminatedEvent{
@@ -71,7 +71,7 @@ func (state *endpointWriter) initializeInternal() error {
 		}
 	}()
 
-	plog.Info("EndpointWriter connected", log.String("address", state.address))
+	plog.Info().Str("address", state.address).Msg("EndpointWriter connected")
 	connected := &EndpointConnectedEvent{Address: state.address}
 	eventstream.Publish(connected)
 	state.stream = stream
@@ -94,7 +94,7 @@ func (state *endpointWriter) sendEnvelopes(msg []interface{}, ctx actor.Context)
 
 		switch unwrapped := tmp.(type) {
 		case *EndpointTerminatedEvent, EndpointTerminatedEvent:
-			plog.Debug("Handling array wrapped terminate event", log.String("address", state.address), log.Object("msg", unwrapped))
+			plog.Debug().Str("address", state.address).Interface("msg", unwrapped).Msg("Handling array wrapped terminate event")
 			ctx.Self().Stop()
 			return
 		}
@@ -138,7 +138,7 @@ func (state *endpointWriter) sendEnvelopes(msg []interface{}, ctx actor.Context)
 
 	if err != nil {
 		ctx.Stash()
-		plog.Debug("gRPC Failed to send", log.String("address", state.address))
+		plog.Debug().Str("address", state.address).Msg("gRPC Failed to send")
 		panic("restart it")
 	}
 }
@@ -169,6 +169,6 @@ func (state *endpointWriter) Receive(ctx actor.Context) {
 	case actor.SystemMessage, actor.AutoReceiveMessage:
 		//ignore
 	default:
-		plog.Error("EndpointWriter received unknown message", log.String("address", state.address), log.TypeOf("type", msg), log.Message(msg))
+		plog.Error().Str("address", state.address).Str("type", reflect.TypeOf(msg).String()).Interface("msg", msg).Msg("EndpointWriter received unknown message")
 	}
 }

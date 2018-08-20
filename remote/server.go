@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/aergoio/aergo-actor/actor"
-	"github.com/aergoio/aergo-actor/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
 )
@@ -23,7 +22,7 @@ func Start(address string, options ...RemotingOption) {
 	grpclog.SetLogger(slog.New(ioutil.Discard, "", 0))
 	lis, err := net.Listen("tcp", address)
 	if err != nil {
-		plog.Error("failed to listen", log.Error(err))
+		plog.Error().Err(err).Msg("failed to listen")
 		os.Exit(1)
 	}
 	config := defaultRemoteConfig()
@@ -41,7 +40,8 @@ func Start(address string, options ...RemotingOption) {
 	s = grpc.NewServer(config.serverOptions...)
 	edpReader = &endpointReader{}
 	RegisterRemotingServer(s, edpReader)
-	plog.Info("Starting Proto.Actor server", log.String("address", address))
+	plog.Info().Str("address", address).Msg("Starting Proto.Actor server")
+
 	go s.Serve(lis)
 }
 
@@ -62,13 +62,13 @@ func Shutdown(graceful bool) {
 
 		select {
 		case <-c:
-			plog.Info("Stopped Proto.Actor server")
+			plog.Info().Msg("Stopped Proto.Actor server")
 		case <-time.After(time.Second * 10):
 			s.Stop()
-			plog.Info("Stopped Proto.Actor server", log.String("err", "timeout"))
+			plog.Info().Str("err", "timeout").Msg("Stopped Proto.Actor server")
 		}
 	} else {
 		s.Stop()
-		plog.Info("Killed Proto.Actor server")
+		plog.Info().Msg("Killed Proto.Actor server")
 	}
 }

@@ -4,8 +4,6 @@ import (
 	"errors"
 	"sync"
 	"time"
-
-	"github.com/aergoio/aergo-actor/log"
 )
 
 // ErrTimeout is the error used when a future times out before receiving a result.
@@ -24,7 +22,7 @@ func NewFuturePrefix(prefix string, d time.Duration) *Future {
 
 	pid, ok := ProcessRegistry.Add(ref, prefix+id)
 	if !ok {
-		plog.Error("failed to register future process", log.Stringer("pid", pid))
+		plog.Error().Interface("pid", pid).Msg("failed to register future process")
 	}
 
 	ref.pid = pid

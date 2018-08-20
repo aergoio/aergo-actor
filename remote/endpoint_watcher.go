@@ -1,8 +1,9 @@
 package remote
 
 import (
+	reflect "reflect"
+
 	"github.com/aergoio/aergo-actor/actor"
-	"github.com/aergoio/aergo-actor/log"
 )
 
 func newEndpointWatcher(address string) actor.Producer {
@@ -19,7 +20,7 @@ type endpointWatcher struct {
 }
 
 func (state *endpointWatcher) initialize() {
-	plog.Info("Started EndpointWatcher", log.String("address", state.address))
+	plog.Info().Str("address", state.address).Msg("Started EndpointWatcher")
 	state.watched = make(map[string]*actor.PIDSet)
 }
 
@@ -48,7 +49,7 @@ func (state *endpointWatcher) Receive(ctx actor.Context) {
 	case *EndpointConnectedEvent:
 		//Already connected, pass
 	case *EndpointTerminatedEvent:
-		plog.Info("EndpointWatcher handling terminated", log.String("address", state.address))
+		plog.Info().Str("address", state.address).Msg("EndpointWatcher handling terminated")
 
 		for id, pidSet := range state.watched {
 			//try to find the watcher ID in the local actor registry
@@ -108,7 +109,7 @@ func (state *endpointWatcher) Receive(ctx actor.Context) {
 	case actor.SystemMessage, actor.AutoReceiveMessage:
 		//ignore
 	default:
-		plog.Error("EndpointWatcher received unknown message", log.String("address", state.address), log.Message(msg))
+		plog.Error().Str("address", state.address).Interface("msg", msg).Msg("EndpointWatcher received unknown message")
 	}
 }
 
@@ -128,14 +129,15 @@ func (state *endpointWatcher) Terminated(ctx actor.Context) {
 			ref.SendSystemMessage(msg.Watcher, terminated)
 		}
 	case *EndpointConnectedEvent:
-		plog.Info("EndpointWatcher handling restart", log.String("address", state.address))
+		plog.Info().Str("address", state.address).Msg("EndpointWatcher handling restart")
 		ctx.SetBehavior(state.Receive)
 	case *remoteTerminate, *EndpointTerminatedEvent, *remoteUnwatch:
 		// pass
-		plog.Error("EndpointWatcher receive message for already terminated endpoint", log.String("address", state.address), log.Message(msg))
+		plog.Error().Str("address", state.address).Interface("msg", msg).Msg("EndpointWatcher receive message for already terminated endpoint")
 	case actor.SystemMessage, actor.AutoReceiveMessage:
 		//ignore
 	default:
-		plog.Error("EndpointWatcher received unknown message", log.String("address", state.address), log.TypeOf("type", msg), log.Message(msg))
+		plog.Error().Str("address", state.address).Str("type", reflect.TypeOf(msg).String()).
+			Interface("msg", msg).Msg("EndpointWatcher received unknown message")
 	}
 }

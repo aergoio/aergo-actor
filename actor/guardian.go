@@ -3,8 +3,6 @@ package actor
 import (
 	"errors"
 	"sync"
-
-	"github.com/aergoio/aergo-actor/log"
 )
 
 type guardiansValue struct {
@@ -29,7 +27,7 @@ func (gs *guardiansValue) newGuardian(s SupervisorStrategy) *guardianProcess {
 
 	pid, ok := ProcessRegistry.Add(ref, "guardian"+id)
 	if !ok {
-		plog.Error("failed to register guardian process", log.Stringer("pid", pid))
+		plog.Error().Interface("pid", pid).Msg("failed to register guardian process")
 	}
 
 	ref.pid = pid

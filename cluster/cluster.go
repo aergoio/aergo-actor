@@ -5,7 +5,6 @@ import (
 
 	"github.com/AsynkronIT/gonet"
 	"github.com/aergoio/aergo-actor/actor"
-	"github.com/aergoio/aergo-actor/log"
 	"github.com/aergoio/aergo-actor/remote"
 )
 
@@ -23,7 +22,7 @@ func StartWithConfig(config *ClusterConfig) {
 
 	address := actor.ProcessRegistry.Address
 	h, p := gonet.GetAddress(address)
-	plog.Info("Starting Proto.Actor cluster", log.String("address", address))
+	plog.Info().Str("address", address).Msg("Starting Proto.Actor cluster")
 	kinds := remote.GetKnownKinds()
 
 	//for each known kind, spin up a partition-kind actor to handle all requests for that kind
@@ -48,7 +47,7 @@ func Shutdown(graceful bool) {
 	remote.Shutdown(graceful)
 
 	address := actor.ProcessRegistry.Address
-	plog.Info("Stopped Proto.Actor cluster", log.String("address", address))
+	plog.Info().Str("address", address).Msg("Stopped Proto.Actor cluster")
 }
 
 //Get a PID to a virtual actor
@@ -75,10 +74,10 @@ func Get(name string, kind string) (*actor.PID, remote.ResponseStatusCode) {
 	remotePartition := partition.partitionForKind(address, kind)
 	r, err := remotePartition.RequestFuture(req, cfg.TimeoutTime).Result()
 	if err == actor.ErrTimeout {
-		plog.Error("PidCache Pid request timeout")
+		plog.Error().Msg("PidCache Pid request timeout")
 		return nil, remote.ResponseStatusCodeTIMEOUT
 	} else if err != nil {
-		plog.Error("PidCache Pid request error", log.Error(err))
+		plog.Error().Err(err).Msg("PidCache Pid request error")
 		return nil, remote.ResponseStatusCodeERROR
 	}
 
