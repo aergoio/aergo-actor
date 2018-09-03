@@ -71,8 +71,15 @@ func (m *endpointWriterMailbox) run() {
 	var msg interface{}
 	defer func() {
 		if r := recover(); r != nil {
+			// Unix's skip call stack is 6
+			// it has 2 more stacks (panic.go:63 & signal_unix.go:388) than windows's stack
+			skipStack := 6
+			if runtime.GOOS == "windows" {
+				skipStack = 4
+			}
 			plog.Debug().Str("receiver", fmt.Sprintf("%s", m.invoker)).Interface("reason", r).
-				Str("panic_at", log.SkipCaller(4)).Msg("Recovering from panic")
+				Str("panic_at", log.SkipCaller(skipStack)).Msg("Recovering from panic")
+
 			m.invoker.EscalateFailure(r, msg)
 		}
 	}()
