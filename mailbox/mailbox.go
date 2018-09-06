@@ -28,6 +28,7 @@ type Inbound interface {
 	PostUserMessage(message interface{})
 	PostSystemMessage(message interface{})
 	Start()
+	Len() int32
 }
 
 // Producer is a function which creates a new mailbox
@@ -66,6 +67,10 @@ func (m *defaultMailbox) PostSystemMessage(message interface{}) {
 	m.systemMailbox.Push(message)
 	atomic.AddInt32(&m.sysMessages, 1)
 	m.schedule()
+}
+
+func (m *defaultMailbox) Len() int32 {
+	return atomic.LoadInt32(&m.userMessages)
 }
 
 func (m *defaultMailbox) schedule() {

@@ -145,6 +145,10 @@ func (ref *futureProcess) Stop(pid *PID) {
 	ref.cond.Signal()
 }
 
+func (ref *futureProcess) MsgNum() int32 {
+	return 0
+}
+
 //TODO: we could replace "pipes" with this
 //instead of pushing PIDs to pipes, we could push wrapper funcs that tells the pid
 //as a completion, that would unify the model

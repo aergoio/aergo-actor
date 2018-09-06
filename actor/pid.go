@@ -40,6 +40,11 @@ func (pid *PID) ref() Process {
 	return ref
 }
 
+// MsgNum returns a number of messages those are queued in mailbox
+func (pid *PID) MsgNum() int32 {
+	return pid.ref().MsgNum()
+}
+
 // Tell sends a messages asynchronously to the PID
 func (pid *PID) Tell(message interface{}) {
 	pid.ref().SendUserMessage(pid, message)

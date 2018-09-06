@@ -22,3 +22,7 @@ func (ref *localProcess) Stop(pid *PID) {
 	atomic.StoreInt32(&ref.dead, 1)
 	ref.SendSystemMessage(pid, stopMessage)
 }
+
+func (ref *localProcess) MsgNum() int32 {
+	return ref.mailbox.Len()
+}

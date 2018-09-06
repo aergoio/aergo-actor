@@ -55,3 +55,7 @@ func (ref *process) SendSystemMessage(pid *actor.PID, message interface{}) {
 func (ref *process) Stop(pid *actor.PID) {
 	ref.SendSystemMessage(pid, stopMessage)
 }
+
+func (ref *process) MsgNum() int32 {
+	return ref.MsgNum()
+}

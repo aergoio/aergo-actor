@@ -45,6 +45,11 @@ func (m *mockProcess) Stop(pid *PID) {
 	m.Called(pid)
 }
 
+func (m *mockProcess) MsgNum() int32 {
+	m.Called()
+	return 0
+}
+
 type mockContext struct {
 	mock.Mock
 }

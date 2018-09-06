@@ -53,6 +53,10 @@ func (g *guardianProcess) Stop(pid *PID) {
 	//Ignore
 }
 
+func (g *guardianProcess) MsgNum() int32 {
+	return 0
+}
+
 func (g *guardianProcess) Children() []*PID {
 	panic(errors.New("Guardian does not hold its children PIDs"))
 }

@@ -42,6 +42,10 @@ func (m *endpointWriterMailbox) PostSystemMessage(message interface{}) {
 	m.schedule()
 }
 
+func (m *endpointWriterMailbox) Len() int32 {
+	return atomic.LoadInt32(&m.hasMoreMessages)
+}
+
 func (m *endpointWriterMailbox) schedule() {
 	atomic.StoreInt32(&m.hasMoreMessages, mailboxHasMoreMessages) //we have more messages to process
 	if atomic.CompareAndSwapInt32(&m.schedulerStatus, mailboxIdle, mailboxRunning) {
