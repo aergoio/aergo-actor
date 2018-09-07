@@ -25,6 +25,9 @@ type Serializer interface {
 
 func Serialize(message interface{}, serializerID int32) ([]byte, string, error) {
 	res, err := serializers[serializerID].Serialize(message)
+	if err != nil {
+		return nil, "", err
+	}
 	typeName, err := serializers[serializerID].GetTypeName(message)
 	return res, typeName, err
 }

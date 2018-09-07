@@ -1,8 +1,8 @@
 package mailbox
 
 import (
-	"github.com/aergoio/aergo-actor/internal/queue/mpsc"
 	rbqueue "github.com/Workiva/go-datastructures/queue"
+	"github.com/aergoio/aergo-actor/internal/queue/mpsc"
 )
 
 type boundedMailboxQueue struct {
@@ -32,7 +32,7 @@ func Bounded(size int, mailboxStats ...Statistics) Producer {
 	return bounded(size, false, mailboxStats...)
 }
 
-// Bounded dropping returns a producer which creates an bounded mailbox of the specified size that drops front element on push
+// BoundedDropping returns a producer which creates an bounded mailbox of the specified size that drops front element on push
 func BoundedDropping(size int, mailboxStats ...Statistics) Producer {
 	return bounded(size, true, mailboxStats...)
 }
