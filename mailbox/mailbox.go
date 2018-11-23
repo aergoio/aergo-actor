@@ -114,7 +114,7 @@ func (m *defaultMailbox) run() {
 				skipStack = 4
 			}
 			plog.Error().Interface("reason", r).Interface("msg", msg).Str("receiver", fmt.Sprintf("%s", m.invoker)).
-				Str("panic_at", log.SkipCaller(skipStack)).Msg("Recovering from panic")
+				Str("panic_at", log.PanicInvoker(skipStack)).Msg("Recovering from panic")
 
 			m.invoker.EscalateFailure(r, msg)
 		}

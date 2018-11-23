@@ -82,7 +82,7 @@ func (m *endpointWriterMailbox) run() {
 				skipStack = 4
 			}
 			plog.Debug().Str("receiver", fmt.Sprintf("%s", m.invoker)).Interface("reason", r).
-				Str("panic_at", log.SkipCaller(skipStack)).Msg("Recovering from panic")
+				Str("panic_at", log.PanicInvoker(skipStack)).Msg("Recovering from panic")
 
 			m.invoker.EscalateFailure(r, msg)
 		}
