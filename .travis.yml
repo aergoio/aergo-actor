@@ -27,6 +27,7 @@ before_install:
   - go get github.com/rs/zerolog
   - go get github.com/spf13/viper
   - go get github.com/spf13/pflag
+  - go get github.com/mattn/go-colorable
   - go get -t github.com/codeclimate/test-reporter
 
 before_script:
