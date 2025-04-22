@@ -1,7 +1,7 @@
 package actor
 
 import (
-	"github.com/aergoio/aergo-actor/eventstream"
+	"github.com/AsynkronIT/protoactor-go/eventstream"
 )
 
 type deadLetterProcess struct{}

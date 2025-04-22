@@ -5,9 +5,9 @@ import (
 	"runtime"
 	"sync/atomic"
 
-	"github.com/aergoio/aergo-actor/internal/queue/goring"
-	"github.com/aergoio/aergo-actor/internal/queue/mpsc"
-	"github.com/aergoio/aergo-actor/mailbox"
+	"github.com/AsynkronIT/protoactor-go/internal/queue/goring"
+	"github.com/AsynkronIT/protoactor-go/internal/queue/mpsc"
+	"github.com/AsynkronIT/protoactor-go/mailbox"
 	"github.com/aergoio/aergo-lib/log"
 )
 

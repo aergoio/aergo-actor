@@ -3,9 +3,9 @@ package cluster
 import (
 	"reflect"
 
-	"github.com/aergoio/aergo-actor/actor"
-	"github.com/aergoio/aergo-actor/eventstream"
-	"github.com/aergoio/aergo-actor/remote"
+	"github.com/AsynkronIT/protoactor-go/actor"
+	"github.com/AsynkronIT/protoactor-go/eventstream"
+	"github.com/AsynkronIT/protoactor-go/remote"
 )
 
 var partition *partitionValue

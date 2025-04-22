@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aergoio/aergo-actor/cluster"
-	"github.com/aergoio/aergo-actor/eventstream"
+	"github.com/AsynkronIT/protoactor-go/cluster"
+	"github.com/AsynkronIT/protoactor-go/eventstream"
 )
 
 func TestRegisterMember(t *testing.T) {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/aergoio/aergo-actor/actor"
+	"github.com/AsynkronIT/protoactor-go/actor"
 )
 
 type setBehaviorActor struct {

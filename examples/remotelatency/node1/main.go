@@ -4,9 +4,9 @@ import (
 	"time"
 
 	console "github.com/AsynkronIT/goconsole"
-	"github.com/aergoio/aergo-actor/actor"
-	"github.com/aergoio/aergo-actor/examples/remotelatency/messages"
-	"github.com/aergoio/aergo-actor/remote"
+	"github.com/AsynkronIT/protoactor-go/actor"
+	"github.com/AsynkronIT/protoactor-go/examples/remotelatency/messages"
+	"github.com/AsynkronIT/protoactor-go/remote"
 
 	"runtime"
 )

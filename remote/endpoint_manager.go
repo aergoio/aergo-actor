@@ -4,10 +4,10 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/aergoio/aergo-actor/mailbox"
+	"github.com/AsynkronIT/protoactor-go/mailbox"
 
-	"github.com/aergoio/aergo-actor/actor"
-	"github.com/aergoio/aergo-actor/eventstream"
+	"github.com/AsynkronIT/protoactor-go/actor"
+	"github.com/AsynkronIT/protoactor-go/eventstream"
 )
 
 var endpointManager *endpointManagerValue

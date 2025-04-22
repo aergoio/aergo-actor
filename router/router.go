@@ -1,6 +1,6 @@
 package router
 
-import "github.com/aergoio/aergo-actor/actor"
+import "github.com/AsynkronIT/protoactor-go/actor"
 
 // A type that satisfies router.Interface can be used as a router
 type Interface interface {

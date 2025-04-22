@@ -3,7 +3,7 @@ package router
 import proto "github.com/gogo/protobuf/proto"
 import fmt "fmt"
 import math "math"
-import actor "github.com/aergoio/aergo-actor/actor"
+import actor "github.com/AsynkronIT/protoactor-go/actor"
 
 import strings "strings"
 import reflect "reflect"

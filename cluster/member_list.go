@@ -3,8 +3,8 @@ package cluster
 import (
 	"sync"
 
-	"github.com/aergoio/aergo-actor/eventstream"
-	"github.com/aergoio/aergo-actor/remote"
+	"github.com/AsynkronIT/protoactor-go/eventstream"
+	"github.com/AsynkronIT/protoactor-go/remote"
 )
 
 var memberList *memberListValue

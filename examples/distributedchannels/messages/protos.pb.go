@@ -3,7 +3,7 @@ package messages
 import proto "github.com/gogo/protobuf/proto"
 import fmt "fmt"
 import math "math"
-import _ "github.com/aergoio/aergo-actor/actor"
+import _ "github.com/AsynkronIT/protoactor-go/actor"
 
 import strings "strings"
 import reflect "reflect"

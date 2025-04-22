@@ -6,11 +6,11 @@ import (
 	"time"
 
 	console "github.com/AsynkronIT/goconsole"
-	"github.com/aergoio/aergo-actor/actor"
-	"github.com/aergoio/aergo-actor/mailbox"
+	"github.com/AsynkronIT/protoactor-go/actor"
+	"github.com/AsynkronIT/protoactor-go/mailbox"
 )
 
-//sent to producer to request more work
+// sent to producer to request more work
 type requestMoreWork struct {
 	items int
 }

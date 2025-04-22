@@ -5,9 +5,9 @@ import (
 	"os"
 	"runtime/pprof"
 
-	"github.com/aergoio/aergo-actor/actor"
-	"github.com/aergoio/aergo-actor/examples/remotebenchmark/messages"
-	"github.com/aergoio/aergo-actor/remote"
+	"github.com/AsynkronIT/protoactor-go/actor"
+	"github.com/AsynkronIT/protoactor-go/examples/remotebenchmark/messages"
+	"github.com/AsynkronIT/protoactor-go/remote"
 
 	"log"
 	"sync"
@@ -15,7 +15,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/aergoio/aergo-actor/mailbox"
+	"github.com/AsynkronIT/protoactor-go/mailbox"
 )
 
 type localActor struct {

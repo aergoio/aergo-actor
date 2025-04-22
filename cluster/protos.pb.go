@@ -3,7 +3,7 @@ package cluster
 import proto "github.com/gogo/protobuf/proto"
 import fmt "fmt"
 import math "math"
-import actor "github.com/aergoio/aergo-actor/actor"
+import actor "github.com/AsynkronIT/protoactor-go/actor"
 import _ "github.com/gogo/protobuf/gogoproto"
 
 import bytes "bytes"

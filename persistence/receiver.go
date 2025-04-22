@@ -4,7 +4,7 @@ import (
 	"log"
 	"reflect"
 
-	"github.com/aergoio/aergo-actor/actor"
+	"github.com/AsynkronIT/protoactor-go/actor"
 )
 
 func Using(provider Provider) func(next actor.ActorFunc) actor.ActorFunc {

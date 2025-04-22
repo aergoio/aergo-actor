@@ -1,6 +1,6 @@
 package remote
 
-import "github.com/aergoio/aergo-actor/actor"
+import "github.com/AsynkronIT/protoactor-go/actor"
 
 type EndpointTerminatedEvent struct {
 	Address string

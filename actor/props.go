@@ -1,6 +1,6 @@
 package actor
 
-import "github.com/aergoio/aergo-actor/mailbox"
+import "github.com/AsynkronIT/protoactor-go/mailbox"
 
 type InboundMiddleware func(next ActorFunc) ActorFunc
 type OutboundMiddleware func(next SenderFunc) SenderFunc
@@ -56,49 +56,49 @@ func (props *Props) WithOutboundMiddleware(middleware ...OutboundMiddleware) *Pr
 	return props
 }
 
-//WithMailbox assigns the desired mailbox producer to the props
+// WithMailbox assigns the desired mailbox producer to the props
 func (props *Props) WithMailbox(mailbox mailbox.Producer) *Props {
 	props.mailboxProducer = mailbox
 	return props
 }
 
-//WithGuardian assigns a guardian strategy to the props
+// WithGuardian assigns a guardian strategy to the props
 func (props *Props) WithGuardian(guardian SupervisorStrategy) *Props {
 	props.guardianStrategy = guardian
 	return props
 }
 
-//WithSupervisor assigns a supervision strategy to the props
+// WithSupervisor assigns a supervision strategy to the props
 func (props *Props) WithSupervisor(supervisor SupervisorStrategy) *Props {
 	props.supervisionStrategy = supervisor
 	return props
 }
 
-//WithDispatcher assigns a dispatcher to the props
+// WithDispatcher assigns a dispatcher to the props
 func (props *Props) WithDispatcher(dispatcher mailbox.Dispatcher) *Props {
 	props.dispatcher = dispatcher
 	return props
 }
 
-//WithSpawnFunc assigns a custom spawn func to the props, this is mainly for internal usage
+// WithSpawnFunc assigns a custom spawn func to the props, this is mainly for internal usage
 func (props *Props) WithSpawnFunc(spawn SpawnFunc) *Props {
 	props.spawner = spawn
 	return props
 }
 
-//WithFunc assigns a receive func to the props
+// WithFunc assigns a receive func to the props
 func (props *Props) WithFunc(f ActorFunc) *Props {
 	props.actorProducer = func() Actor { return f }
 	return props
 }
 
-//WithProducer assigns a actor producer to the props
+// WithProducer assigns a actor producer to the props
 func (props *Props) WithProducer(p Producer) *Props {
 	props.actorProducer = p
 	return props
 }
 
-//Deprecated: WithInstance is deprecated.
+// Deprecated: WithInstance is deprecated.
 func (props *Props) WithInstance(a Actor) *Props {
 	props.actorProducer = makeProducerFromInstance(a)
 	return props

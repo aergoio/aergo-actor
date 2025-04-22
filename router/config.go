@@ -1,7 +1,7 @@
 package router
 
 import (
-	"github.com/aergoio/aergo-actor/actor"
+	"github.com/AsynkronIT/protoactor-go/actor"
 )
 
 type RouterType int

@@ -1,6 +1,6 @@
 package actor
 
-import "github.com/aergoio/aergo-actor/mailbox"
+import "github.com/AsynkronIT/protoactor-go/mailbox"
 
 var (
 	defaultDispatcher = mailbox.NewDefaultDispatcher(300)

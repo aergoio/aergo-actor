@@ -3,7 +3,7 @@ package cluster
 import (
 	"time"
 
-	"github.com/aergoio/aergo-actor/actor"
+	"github.com/AsynkronIT/protoactor-go/actor"
 )
 
 type GrainContext interface {

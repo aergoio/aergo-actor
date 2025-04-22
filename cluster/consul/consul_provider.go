@@ -5,8 +5,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/aergoio/aergo-actor/cluster"
-	"github.com/aergoio/aergo-actor/eventstream"
+	"github.com/AsynkronIT/protoactor-go/cluster"
+	"github.com/AsynkronIT/protoactor-go/eventstream"
 	"github.com/hashicorp/consul/api"
 )
 
@@ -151,7 +151,7 @@ func (p *ConsulProvider) registerService() error {
 		Port:    p.port,
 		Check: &api.AgentServiceCheck{
 			DeregisterCriticalServiceAfter: p.deregisterCritical.String(),
-			TTL: p.ttl.String(),
+			TTL:                            p.ttl.String(),
 		},
 	}
 	return p.client.Agent().ServiceRegister(s)
@@ -194,7 +194,7 @@ func (p *ConsulProvider) deregisterMember() error {
 	return err
 }
 
-//call this directly after registering the service
+// call this directly after registering the service
 func (p *ConsulProvider) blockingStatusChange() {
 	p.notifyStatuses()
 }

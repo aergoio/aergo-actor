@@ -4,8 +4,8 @@ import (
 	reflect "reflect"
 	"time"
 
-	"github.com/aergoio/aergo-actor/actor"
-	"github.com/aergoio/aergo-actor/eventstream"
+	"github.com/AsynkronIT/protoactor-go/actor"
+	"github.com/AsynkronIT/protoactor-go/eventstream"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )

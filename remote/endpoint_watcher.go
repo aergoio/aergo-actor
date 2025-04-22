@@ -3,7 +3,7 @@ package remote
 import (
 	reflect "reflect"
 
-	"github.com/aergoio/aergo-actor/actor"
+	"github.com/AsynkronIT/protoactor-go/actor"
 )
 
 func newEndpointWatcher(address string) actor.Producer {

@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/AsynkronIT/gonet"
-	"github.com/aergoio/aergo-actor/actor"
-	"github.com/aergoio/aergo-actor/remote"
+	"github.com/AsynkronIT/protoactor-go/actor"
+	"github.com/AsynkronIT/protoactor-go/remote"
 )
 
 var cfg *ClusterConfig
@@ -50,7 +50,7 @@ func Shutdown(graceful bool) {
 	plog.Info().Str("address", address).Msg("Stopped Proto.Actor cluster")
 }
 
-//Get a PID to a virtual actor
+// Get a PID to a virtual actor
 func Get(name string, kind string) (*actor.PID, remote.ResponseStatusCode) {
 	//Check Cache
 	if pid, ok := pidCache.getCache(name); ok {
@@ -104,7 +104,7 @@ func GetMemberPIDs(kind string) actor.PIDSet {
 	pids := actor.PIDSet{}
 	for _, value := range memberList.members {
 		for _, memberKind := range value.Kinds {
-			if kind == memberKind  {
+			if kind == memberKind {
 				pids.Add(actor.NewPID(value.Address(), kind))
 			}
 		}
@@ -112,7 +112,7 @@ func GetMemberPIDs(kind string) actor.PIDSet {
 	return pids
 }
 
-//RemoveCache at PidCache
+// RemoveCache at PidCache
 func RemoveCache(name string) {
 	pidCache.removeCacheByName(name)
 }

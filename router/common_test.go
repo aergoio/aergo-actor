@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/aergoio/aergo-actor/actor"
+	"github.com/AsynkronIT/protoactor-go/actor"
 	"github.com/stretchr/testify/mock"
 )
 

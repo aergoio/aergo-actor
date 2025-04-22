@@ -3,7 +3,7 @@ package actor
 import (
 	"testing"
 
-	"github.com/aergoio/aergo-actor/eventstream"
+	"github.com/AsynkronIT/protoactor-go/eventstream"
 	"github.com/stretchr/testify/assert"
 )
 

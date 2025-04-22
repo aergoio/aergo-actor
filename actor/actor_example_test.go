@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aergoio/aergo-actor/actor"
+	"github.com/AsynkronIT/protoactor-go/actor"
 )
 
 // Demonstrates how to create an actor using a function literal and how to send a message asynchronously
