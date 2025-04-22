@@ -4,13 +4,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AsynkronIT/protoactor-go/actor"
+	"github.com/asynkron/protoactor-go/actor"
 )
 
 type poolRouterActor struct {
 	props  *actor.Props
 	config RouterConfig
-	state  Interface
+	state  State
 	wg     *sync.WaitGroup
 }
 
@@ -47,22 +47,27 @@ func (a *poolRouterActor) Receive(context actor.Context) {
 		// in terms of both delay it cause to the router actor and the time it
 		// provides for the routee to receive messages before it dies.
 		time.Sleep(time.Millisecond * 1)
-		m.PID.Tell(&actor.PoisonPill{})
+		context.Send(m.PID, &actor.PoisonPill{})
 
 	case *BroadcastMessage:
 		msg := m.Message
 		sender := context.Sender()
-		a.state.GetRoutees().ForEach(func(i int, pid actor.PID) {
-			pid.Request(msg, sender)
+		a.state.GetRoutees().ForEach(func(i int, pid *actor.PID) {
+			context.RequestWithCustomSender(pid, msg, sender)
 		})
 
 	case *GetRoutees:
 		r := a.state.GetRoutees()
 		routees := make([]*actor.PID, r.Len())
-		r.ForEach(func(i int, pid actor.PID) {
-			routees[i] = &pid
+		r.ForEach(func(i int, pid *actor.PID) {
+			routees[i] = pid
 		})
 
 		context.Respond(&Routees{PIDs: routees})
+	case *actor.Terminated:
+		r := a.state.GetRoutees()
+		if r.Remove(m.Who) {
+			a.state.SetRoutees(r)
+		}
 	}
 }

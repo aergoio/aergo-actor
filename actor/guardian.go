@@ -2,14 +2,21 @@ package actor
 
 import (
 	"errors"
+	"log/slog"
 	"sync"
 )
 
 type guardiansValue struct {
-	guardians *sync.Map
+	actorSystem *ActorSystem
+	guardians   *sync.Map
 }
 
-var guardians = &guardiansValue{&sync.Map{}}
+func NewGuardians(actorSystem *ActorSystem) *guardiansValue {
+	return &guardiansValue{
+		actorSystem: actorSystem,
+		guardians:   &sync.Map{},
+	}
+}
 
 func (gs *guardiansValue) getGuardianPid(s SupervisorStrategy) *PID {
 	if g, ok := gs.guardians.Load(s); ok {
@@ -22,12 +29,15 @@ func (gs *guardiansValue) getGuardianPid(s SupervisorStrategy) *PID {
 
 // newGuardian creates and returns a new actor.guardianProcess with a timeout of duration d
 func (gs *guardiansValue) newGuardian(s SupervisorStrategy) *guardianProcess {
-	ref := &guardianProcess{strategy: s}
-	id := ProcessRegistry.NextId()
+	ref := &guardianProcess{
+		strategy:  s,
+		guardians: gs,
+	}
+	id := gs.actorSystem.ProcessRegistry.NextId()
 
-	pid, ok := ProcessRegistry.Add(ref, "guardian"+id)
+	pid, ok := gs.actorSystem.ProcessRegistry.Add(ref, "guardian"+id)
 	if !ok {
-		plog.Error().Interface("pid", pid).Msg("failed to register guardian process")
+		gs.actorSystem.Logger().Error("failed to register guardian process", slog.Any("pid", pid))
 	}
 
 	ref.pid = pid
@@ -35,22 +45,25 @@ func (gs *guardiansValue) newGuardian(s SupervisorStrategy) *guardianProcess {
 }
 
 type guardianProcess struct {
-	pid      *PID
-	strategy SupervisorStrategy
+	guardians *guardiansValue
+	pid       *PID
+	strategy  SupervisorStrategy
 }
 
-func (g *guardianProcess) SendUserMessage(pid *PID, message interface{}) {
-	panic(errors.New("Guardian actor cannot receive any user messages"))
+var _ Process = &guardianProcess{}
+
+func (g *guardianProcess) SendUserMessage(_ *PID, _ interface{}) {
+	panic(errors.New("guardian actor cannot receive any user messages"))
 }
 
-func (g *guardianProcess) SendSystemMessage(pid *PID, message interface{}) {
+func (g *guardianProcess) SendSystemMessage(_ *PID, message interface{}) {
 	if msg, ok := message.(*Failure); ok {
-		g.strategy.HandleFailure(g, msg.Who, msg.RestartStats, msg.Reason, msg.Message)
+		g.strategy.HandleFailure(g.guardians.actorSystem, g, msg.Who, msg.RestartStats, msg.Reason, msg.Message)
 	}
 }
 
-func (g *guardianProcess) Stop(pid *PID) {
-	//Ignore
+func (g *guardianProcess) Stop(_ *PID) {
+	// Ignore
 }
 
 func (g *guardianProcess) MsgNum() int32 {
@@ -58,27 +71,27 @@ func (g *guardianProcess) MsgNum() int32 {
 }
 
 func (g *guardianProcess) Children() []*PID {
-	panic(errors.New("Guardian does not hold its children PIDs"))
+	panic(errors.New("guardian does not hold its children PIDs"))
 }
 
-func (*guardianProcess) EscalateFailure(reason interface{}, message interface{}) {
-	panic(errors.New("Guardian cannot escalate failure"))
+func (g *guardianProcess) EscalateFailure(_ interface{}, _ interface{}) {
+	panic(errors.New("guardian cannot escalate failure"))
 }
 
-func (*guardianProcess) RestartChildren(pids ...*PID) {
+func (g *guardianProcess) RestartChildren(pids ...*PID) {
 	for _, pid := range pids {
-		pid.sendSystemMessage(restartMessage)
+		pid.sendSystemMessage(g.guardians.actorSystem, restartMessage)
 	}
 }
 
-func (*guardianProcess) StopChildren(pids ...*PID) {
+func (g *guardianProcess) StopChildren(pids ...*PID) {
 	for _, pid := range pids {
-		pid.sendSystemMessage(stopMessage)
+		pid.sendSystemMessage(g.guardians.actorSystem, stopMessage)
 	}
 }
 
-func (*guardianProcess) ResumeChildren(pids ...*PID) {
+func (g *guardianProcess) ResumeChildren(pids ...*PID) {
 	for _, pid := range pids {
-		pid.sendSystemMessage(resumeMailboxMessage)
+		pid.sendSystemMessage(g.guardians.actorSystem, resumeMailboxMessage)
 	}
 }

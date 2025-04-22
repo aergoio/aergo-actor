@@ -21,13 +21,16 @@ type exponentialBackoffStrategy struct {
 	initialBackoff time.Duration
 }
 
-func (strategy *exponentialBackoffStrategy) HandleFailure(supervisor Supervisor, child *PID, rs *RestartStatistics, reason interface{}, message interface{}) {
+var _ SupervisorStrategy = &exponentialBackoffStrategy{}
+
+func (strategy *exponentialBackoffStrategy) HandleFailure(actorSystem *ActorSystem, supervisor Supervisor, child *PID, rs *RestartStatistics, reason interface{}, _ interface{}) {
 	strategy.setFailureCount(rs)
 
 	backoff := rs.FailureCount() * int(strategy.initialBackoff.Nanoseconds())
 	noise := rand.Intn(500)
 	dur := time.Duration(backoff + noise)
 	time.AfterFunc(dur, func() {
+		logFailure(actorSystem, child, reason, RestartDirective)
 		supervisor.RestartChildren(child)
 	})
 }

@@ -2,10 +2,8 @@ package router
 
 import (
 	"math/rand"
-	"sync/atomic"
-	"unsafe"
 
-	"github.com/AsynkronIT/protoactor-go/actor"
+	"github.com/asynkron/protoactor-go/actor"
 )
 
 type randomGroupRouter struct {
@@ -18,13 +16,15 @@ type randomPoolRouter struct {
 
 type randomRouterState struct {
 	routees *actor.PIDSet
-	values  *[]actor.PID
+	sender  actor.SenderContext
+}
+
+func (state *randomRouterState) SetSender(sender actor.SenderContext) {
+	state.sender = sender
 }
 
 func (state *randomRouterState) SetRoutees(routees *actor.PIDSet) {
 	state.routees = routees
-	values := routees.Values()
-	atomic.SwapPointer((*unsafe.Pointer)(unsafe.Pointer(&state.values)), unsafe.Pointer(&values))
 }
 
 func (state *randomRouterState) GetRoutees() *actor.PIDSet {
@@ -32,29 +32,31 @@ func (state *randomRouterState) GetRoutees() *actor.PIDSet {
 }
 
 func (state *randomRouterState) RouteMessage(message interface{}) {
-	pid := randomRoutee(*state.values)
-	pid.Tell(message)
+	pid := randomRoutee(state.routees)
+	state.sender.Send(pid, message)
 }
 
-func NewRandomPool(size int) *actor.Props {
-	return actor.FromSpawnFunc(spawner(&randomPoolRouter{PoolRouter{PoolSize: size}}))
+func NewRandomPool(size int, opts ...actor.PropsOption) *actor.Props {
+	return (&actor.Props{}).
+		Configure(actor.WithSpawnFunc(spawner(&randomPoolRouter{PoolRouter{PoolSize: size}}))).
+		Configure(opts...)
 }
 
 func NewRandomGroup(routees ...*actor.PID) *actor.Props {
-	return actor.FromSpawnFunc(spawner(&randomGroupRouter{GroupRouter{Routees: actor.NewPIDSet(routees...)}}))
+	return (&actor.Props{}).Configure(actor.WithSpawnFunc(spawner(&randomGroupRouter{GroupRouter{Routees: actor.NewPIDSet(routees...)}})))
 }
 
-func (config *randomPoolRouter) CreateRouterState() Interface {
+func (config *randomPoolRouter) CreateRouterState() State {
 	return &randomRouterState{}
 }
 
-func (config *randomGroupRouter) CreateRouterState() Interface {
+func (config *randomGroupRouter) CreateRouterState() State {
 	return &randomRouterState{}
 }
 
-func randomRoutee(routees []actor.PID) actor.PID {
-	l := len(routees)
+func randomRoutee(routees *actor.PIDSet) *actor.PID {
+	l := routees.Len()
 	r := rand.Intn(l)
-	pid := routees[r]
+	pid := routees.Get(r)
 	return pid
 }

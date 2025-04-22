@@ -1,6 +1,6 @@
 package actor
 
-//Directive is an enum for supervision actions
+// Directive is an enum for supervision actions
 type Directive int
 
 // Directive determines how a supervisor should handle a faulting actor
@@ -15,6 +15,6 @@ const (
 	// StopDirective instructs the supervisor to stop the actor
 	StopDirective
 
-	// EscalateDirective instructs the supervisor to escalate handling of the failure to the actor's parent supervisor
+	// EscalateDirective instructs the supervisor to escalate handling of the failure to the actor'pids parent supervisor
 	EscalateDirective
 )

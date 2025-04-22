@@ -5,22 +5,24 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AsynkronIT/protoactor-go/actor"
+	"github.com/asynkron/protoactor-go/actor"
 )
 
 // Demonstrates how to create an actor using a function literal and how to send a message asynchronously
 func Example() {
-	var props *actor.Props = actor.FromFunc(func(c actor.Context) {
+	context := system.Root
+	props := actor.PropsFromFunc(func(c actor.Context) {
 		if msg, ok := c.Message().(string); ok {
 			fmt.Println(msg) // outputs "Hello World"
 		}
 	})
 
-	pid := actor.Spawn(props)
+	pid := context.Spawn(props)
 
-	pid.Tell("Hello World")
+	context.Send(pid, "Hello World")
 	time.Sleep(time.Millisecond * 100)
-	pid.GracefulStop() // wait for the actor to stop
+
+	_ = context.StopFuture(pid).Wait() // wait for the actor to stop
 
 	// Output: Hello World
 }
@@ -29,10 +31,11 @@ func Example() {
 // proceeding
 func Example_synchronous() {
 	var wg sync.WaitGroup
+
 	wg.Add(1)
 
 	// callee will wait for the PING message
-	callee := actor.Spawn(actor.FromFunc(func(c actor.Context) {
+	callee := system.Root.Spawn(actor.PropsFromFunc(func(c actor.Context) {
 		if msg, ok := c.Message().(string); ok {
 			fmt.Println(msg) // outputs PING
 			c.Respond("PONG")
@@ -40,12 +43,12 @@ func Example_synchronous() {
 	}))
 
 	// caller will send a PING message and wait for the PONG
-	caller := actor.Spawn(actor.FromFunc(func(c actor.Context) {
+	caller := system.Root.Spawn(actor.PropsFromFunc(func(c actor.Context) {
 		switch msg := c.Message().(type) {
 		// the first message an actor receives after it has started
 		case *actor.Started:
 			// send a PING to the callee, and specify the response
-			// is sent to Self, which is this actor's PID
+			// is sent to Self, which is this actor'pids PID
 			c.Request(callee, "PING")
 
 		case string:
@@ -55,8 +58,8 @@ func Example_synchronous() {
 	}))
 
 	wg.Wait()
-	callee.GracefulStop()
-	caller.GracefulStop()
+	_ = system.Root.StopFuture(callee).Wait()
+	_ = system.Root.StopFuture(caller).Wait()
 
 	// Output:
 	// PING

@@ -1,26 +1,120 @@
 package actor
 
-import "github.com/AsynkronIT/protoactor-go/mailbox"
+import (
+	"context"
+	"errors"
+	"fmt"
+	"log/slog"
 
-type InboundMiddleware func(next ActorFunc) ActorFunc
-type OutboundMiddleware func(next SenderFunc) SenderFunc
+	"github.com/asynkron/protoactor-go/metrics"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/metric"
+)
 
-// Props represents configuration to define how an actor should be created
-type Props struct {
-	actorProducer       Producer
-	mailboxProducer     mailbox.Producer
-	guardianStrategy    SupervisorStrategy
-	supervisionStrategy SupervisorStrategy
-	inboundMiddleware   []InboundMiddleware
-	outboundMiddleware  []OutboundMiddleware
-	dispatcher          mailbox.Dispatcher
-	spawner             SpawnFunc
+type (
+	SpawnFunc          func(actorSystem *ActorSystem, id string, props *Props, parentContext SpawnerContext) (*PID, error)
+	ReceiverMiddleware func(next ReceiverFunc) ReceiverFunc
+	SenderMiddleware   func(next SenderFunc) SenderFunc
+	ContextDecorator   func(next ContextDecoratorFunc) ContextDecoratorFunc
+	SpawnMiddleware    func(next SpawnFunc) SpawnFunc
+)
+
+// Default values.
+var (
+	defaultDispatcher      = NewDefaultDispatcher(300)
+	defaultMailboxProducer = Unbounded()
+	defaultSpawner         = func(actorSystem *ActorSystem, id string, props *Props, parentContext SpawnerContext) (*PID, error) {
+		ctx := newActorContext(actorSystem, props, parentContext.Self())
+		mb := props.produceMailbox()
+
+		// prepare the mailbox number counter
+		if ctx.actorSystem.Config.MetricsProvider != nil {
+			sysMetrics, ok := ctx.actorSystem.Extensions.Get(extensionId).(*Metrics)
+			if ok && sysMetrics.enabled {
+				if instruments := sysMetrics.metrics.Get(metrics.InternalActorMetrics); instruments != nil {
+					sysMetrics.PrepareMailboxLengthGauge()
+					meter := otel.Meter(metrics.LibName)
+
+					if _, err := meter.RegisterCallback(func(_ context.Context, o metric.Observer) error {
+						o.ObserveInt64(instruments.ActorMailboxLength, int64(mb.UserMessageCount()), metric.WithAttributes(sysMetrics.CommonLabels(ctx)...))
+						return nil
+					}); err != nil {
+						err = fmt.Errorf("failed to instrument Actor Mailbox, %w", err)
+						actorSystem.Logger().Error(err.Error(), slog.Any("error", err))
+					}
+				}
+			}
+		}
+
+		dp := props.getDispatcher()
+		proc := NewActorProcess(mb)
+		pid, absent := actorSystem.ProcessRegistry.Add(proc, id)
+		if !absent {
+			return pid, ErrNameExists
+		}
+		ctx.self = pid
+
+		initialize(props, ctx)
+
+		mb.RegisterHandlers(ctx, dp)
+		mb.PostSystemMessage(startedMessage)
+		mb.Start()
+
+		return pid, nil
+	}
+	defaultContextDecorator = func(ctx Context) Context {
+		return ctx
+	}
+)
+
+func initialize(props *Props, ctx *actorContext) {
+	if props.onInit == nil {
+		return
+	}
+
+	for _, init := range props.onInit {
+		init(ctx)
+	}
 }
 
-func (props *Props) getDispatcher() mailbox.Dispatcher {
+// DefaultSpawner this is a hacking way to allow Proto.Router access default spawner func.
+var DefaultSpawner SpawnFunc = defaultSpawner
+
+// ErrNameExists is the error used when an existing name is used for spawning an actor.
+var ErrNameExists = errors.New("spawn: name exists")
+
+// Props represents configuration to define how an actor should be created.
+type Props struct {
+	spawner                 SpawnFunc
+	producer                ProducerWithActorSystem
+	mailboxProducer         MailboxProducer
+	guardianStrategy        SupervisorStrategy
+	supervisionStrategy     SupervisorStrategy
+	dispatcher              Dispatcher
+	receiverMiddleware      []ReceiverMiddleware
+	senderMiddleware        []SenderMiddleware
+	spawnMiddleware         []SpawnMiddleware
+	receiverMiddlewareChain ReceiverFunc
+	senderMiddlewareChain   SenderFunc
+	spawnMiddlewareChain    SpawnFunc
+	contextDecorator        []ContextDecorator
+	contextDecoratorChain   ContextDecoratorFunc
+	onInit                  []func(ctx Context)
+}
+
+func (props *Props) getSpawner() SpawnFunc {
+	if props.spawner == nil {
+		return defaultSpawner
+	}
+
+	return props.spawner
+}
+
+func (props *Props) getDispatcher() Dispatcher {
 	if props.dispatcher == nil {
 		return defaultDispatcher
 	}
+
 	return props.dispatcher
 }
 
@@ -28,78 +122,34 @@ func (props *Props) getSupervisor() SupervisorStrategy {
 	if props.supervisionStrategy == nil {
 		return defaultSupervisionStrategy
 	}
+
 	return props.supervisionStrategy
 }
 
-func (props *Props) produceMailbox(invoker mailbox.MessageInvoker, dispatcher mailbox.Dispatcher) mailbox.Inbound {
+func (props *Props) getContextDecoratorChain() ContextDecoratorFunc {
+	if props.contextDecoratorChain == nil {
+		return defaultContextDecorator
+	}
+
+	return props.contextDecoratorChain
+}
+
+func (props *Props) produceMailbox() Mailbox {
 	if props.mailboxProducer == nil {
-		return defaultMailboxProducer(invoker, dispatcher)
+		return defaultMailboxProducer()
 	}
-	return props.mailboxProducer(invoker, dispatcher)
+
+	return props.mailboxProducer()
 }
 
-func (props *Props) spawn(id string, parent *PID) (*PID, error) {
-	if props.spawner != nil {
-		return props.spawner(id, props, parent)
+func (props *Props) spawn(actorSystem *ActorSystem, name string, parentContext SpawnerContext) (*PID, error) {
+	return props.getSpawner()(actorSystem, name, props, parentContext)
+}
+
+func (props *Props) Configure(opts ...PropsOption) *Props {
+	for _, opt := range opts {
+		opt(props)
 	}
-	return DefaultSpawner(id, props, parent)
-}
 
-// Assign one or more middlewares to the props
-func (props *Props) WithMiddleware(middleware ...InboundMiddleware) *Props {
-	props.inboundMiddleware = append(props.inboundMiddleware, middleware...)
-	return props
-}
-
-func (props *Props) WithOutboundMiddleware(middleware ...OutboundMiddleware) *Props {
-	props.outboundMiddleware = append(props.outboundMiddleware, middleware...)
-	return props
-}
-
-// WithMailbox assigns the desired mailbox producer to the props
-func (props *Props) WithMailbox(mailbox mailbox.Producer) *Props {
-	props.mailboxProducer = mailbox
-	return props
-}
-
-// WithGuardian assigns a guardian strategy to the props
-func (props *Props) WithGuardian(guardian SupervisorStrategy) *Props {
-	props.guardianStrategy = guardian
-	return props
-}
-
-// WithSupervisor assigns a supervision strategy to the props
-func (props *Props) WithSupervisor(supervisor SupervisorStrategy) *Props {
-	props.supervisionStrategy = supervisor
-	return props
-}
-
-// WithDispatcher assigns a dispatcher to the props
-func (props *Props) WithDispatcher(dispatcher mailbox.Dispatcher) *Props {
-	props.dispatcher = dispatcher
-	return props
-}
-
-// WithSpawnFunc assigns a custom spawn func to the props, this is mainly for internal usage
-func (props *Props) WithSpawnFunc(spawn SpawnFunc) *Props {
-	props.spawner = spawn
-	return props
-}
-
-// WithFunc assigns a receive func to the props
-func (props *Props) WithFunc(f ActorFunc) *Props {
-	props.actorProducer = func() Actor { return f }
-	return props
-}
-
-// WithProducer assigns a actor producer to the props
-func (props *Props) WithProducer(p Producer) *Props {
-	props.actorProducer = p
-	return props
-}
-
-// Deprecated: WithInstance is deprecated.
-func (props *Props) WithInstance(a Actor) *Props {
-	props.actorProducer = makeProducerFromInstance(a)
 	return props
 }

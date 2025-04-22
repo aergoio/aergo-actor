@@ -1,7 +1,9 @@
 package router
 
 import (
-	"github.com/AsynkronIT/protoactor-go/actor"
+	"sync"
+
+	"github.com/asynkron/protoactor-go/actor"
 )
 
 type RouterType int
@@ -13,8 +15,8 @@ const (
 
 type RouterConfig interface {
 	RouterType() RouterType
-	OnStarted(context actor.Context, props *actor.Props, router Interface)
-	CreateRouterState() Interface
+	OnStarted(context actor.Context, props *actor.Props, state State)
+	CreateRouterState() State
 }
 
 type GroupRouter struct {
@@ -25,23 +27,25 @@ type PoolRouter struct {
 	PoolSize int
 }
 
-func (config *GroupRouter) OnStarted(context actor.Context, props *actor.Props, router Interface) {
-	config.Routees.ForEach(func(i int, pid actor.PID) {
-		context.Watch(&pid)
+func (config *GroupRouter) OnStarted(context actor.Context, props *actor.Props, state State) {
+	config.Routees.ForEach(func(i int, pid *actor.PID) {
+		context.Watch(pid)
 	})
-	router.SetRoutees(config.Routees)
+	state.SetSender(context)
+	state.SetRoutees(config.Routees)
 }
 
 func (config *GroupRouter) RouterType() RouterType {
 	return GroupRouterType
 }
 
-func (config *PoolRouter) OnStarted(context actor.Context, props *actor.Props, router Interface) {
+func (config *PoolRouter) OnStarted(context actor.Context, props *actor.Props, state State) {
 	var routees actor.PIDSet
 	for i := 0; i < config.PoolSize; i++ {
 		routees.Add(context.Spawn(props))
 	}
-	router.SetRoutees(&routees)
+	state.SetSender(context)
+	state.SetRoutees(&routees)
 }
 
 func (config *PoolRouter) RouterType() RouterType {
@@ -49,7 +53,50 @@ func (config *PoolRouter) RouterType() RouterType {
 }
 
 func spawner(config RouterConfig) actor.SpawnFunc {
-	return func(id string, props *actor.Props, parent *actor.PID) (*actor.PID, error) {
-		return spawn(id, config, props, parent)
+	return func(actorSystem *actor.ActorSystem, id string, props *actor.Props, parentContext actor.SpawnerContext) (*actor.PID, error) {
+		return spawn(actorSystem, id, config, props, parentContext)
 	}
+}
+
+func spawn(actorSystem *actor.ActorSystem, id string, config RouterConfig, props *actor.Props, parentContext actor.SpawnerContext) (*actor.PID, error) {
+	ref := &process{
+		actorSystem: actorSystem,
+	}
+	proxy, absent := actorSystem.ProcessRegistry.Add(ref, id)
+	if !absent {
+		return proxy, actor.ErrNameExists
+	}
+
+	pc := *props
+	pc.Configure(actor.WithSpawnFunc(nil))
+	ref.state = config.CreateRouterState()
+
+	if config.RouterType() == GroupRouterType {
+		wg := &sync.WaitGroup{}
+		wg.Add(1)
+		ref.router, _ = actor.DefaultSpawner(actorSystem, id+"/router", actor.PropsFromProducer(func() actor.Actor {
+			return &groupRouterActor{
+				props:  &pc,
+				config: config,
+				state:  ref.state,
+				wg:     wg,
+			}
+		}), parentContext)
+		wg.Wait() // wait for routerActor to start
+	} else {
+		wg := &sync.WaitGroup{}
+		wg.Add(1)
+		ref.router, _ = actor.DefaultSpawner(actorSystem, id+"/router", actor.PropsFromProducer(func() actor.Actor {
+			return &poolRouterActor{
+				props:  &pc,
+				config: config,
+				state:  ref.state,
+				wg:     wg,
+			}
+		}), parentContext)
+		wg.Wait() // wait for routerActor to start
+	}
+
+	ref.parent = parentContext.Self()
+	return proxy, nil
 }

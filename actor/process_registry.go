@@ -3,26 +3,51 @@ package actor
 import (
 	"sync/atomic"
 
+	murmur32 "github.com/twmb/murmur3"
+
 	cmap "github.com/orcaman/concurrent-map"
 )
 
 type ProcessRegistryValue struct {
 	SequenceID     uint64
+	ActorSystem    *ActorSystem
 	Address        string
-	LocalPIDs      cmap.ConcurrentMap
+	LocalPIDs      *SliceMap
 	RemoteHandlers []AddressResolver
 }
 
-var (
+type SliceMap struct {
+	LocalPIDs []cmap.ConcurrentMap
+}
+
+func newSliceMap() *SliceMap {
+	sm := &SliceMap{}
+	sm.LocalPIDs = make([]cmap.ConcurrentMap, 1024)
+
+	for i := 0; i < len(sm.LocalPIDs); i++ {
+		sm.LocalPIDs[i] = cmap.New()
+	}
+
+	return sm
+}
+
+func (s *SliceMap) GetBucket(key string) cmap.ConcurrentMap {
+	hash := murmur32.Sum32([]byte(key))
+	index := int(hash) % len(s.LocalPIDs)
+
+	return s.LocalPIDs[index]
+}
+
+const (
 	localAddress = "nonhost"
 )
 
-// ProcessRegistry is a registry of all active processes.
-//
-// NOTE: This should only be used for advanced scenarios
-var ProcessRegistry = &ProcessRegistryValue{
-	Address:   localAddress,
-	LocalPIDs: cmap.New(),
+func NewProcessRegistry(actorSystem *ActorSystem) *ProcessRegistryValue {
+	return &ProcessRegistryValue{
+		ActorSystem: actorSystem,
+		Address:     localAddress,
+		LocalPIDs:   newSliceMap(),
+	}
 }
 
 // An AddressResolver is used to resolve remote actors
@@ -56,27 +81,33 @@ func uint64ToId(u uint64) string {
 
 func (pr *ProcessRegistryValue) NextId() string {
 	counter := atomic.AddUint64(&pr.SequenceID, 1)
+
 	return uint64ToId(counter)
 }
 
 func (pr *ProcessRegistryValue) Add(process Process, id string) (*PID, bool) {
+	bucket := pr.LocalPIDs.GetBucket(id)
+
 	return &PID{
 		Address: pr.Address,
 		Id:      id,
-	}, pr.LocalPIDs.SetIfAbsent(id, process)
+	}, bucket.SetIfAbsent(id, process)
 }
 
 func (pr *ProcessRegistryValue) Remove(pid *PID) {
-	ref, _ := pr.LocalPIDs.Pop(pid.Id)
-	if l, ok := ref.(*localProcess); ok {
+	bucket := pr.LocalPIDs.GetBucket(pid.Id)
+
+	ref, _ := bucket.Pop(pid.Id)
+	if l, ok := ref.(*ActorProcess); ok {
 		atomic.StoreInt32(&l.dead, 1)
 	}
 }
 
 func (pr *ProcessRegistryValue) Get(pid *PID) (Process, bool) {
 	if pid == nil {
-		return deadLetter, false
+		return pr.ActorSystem.DeadLetter, false
 	}
+
 	if pid.Address != localAddress && pid.Address != pr.Address {
 		for _, handler := range pr.RemoteHandlers {
 			ref, ok := handler(pid)
@@ -84,19 +115,27 @@ func (pr *ProcessRegistryValue) Get(pid *PID) (Process, bool) {
 				return ref, true
 			}
 		}
-		return deadLetter, false
+
+		return pr.ActorSystem.DeadLetter, false
 	}
-	ref, ok := pr.LocalPIDs.Get(pid.Id)
+
+	bucket := pr.LocalPIDs.GetBucket(pid.Id)
+	ref, ok := bucket.Get(pid.Id)
+
 	if !ok {
-		return deadLetter, false
+		return pr.ActorSystem.DeadLetter, false
 	}
+
 	return ref.(Process), true
 }
 
 func (pr *ProcessRegistryValue) GetLocal(id string) (Process, bool) {
-	ref, ok := pr.LocalPIDs.Get(id)
+	bucket := pr.LocalPIDs.GetBucket(id)
+	ref, ok := bucket.Get(id)
+
 	if !ok {
-		return deadLetter, false
+		return pr.ActorSystem.DeadLetter, false
 	}
+
 	return ref.(Process), true
 }

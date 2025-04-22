@@ -1,6 +1,6 @@
 package remote
 
-import "github.com/AsynkronIT/protoactor-go/actor"
+import "github.com/asynkron/protoactor-go/actor"
 
 type EndpointTerminatedEvent struct {
 	Address string
@@ -38,12 +38,18 @@ type JsonMessage struct {
 	Json     string
 }
 
-var (
-	stopMessage interface{} = &actor.Stop{}
-)
+var stopMessage interface{} = &actor.Stop{}
 
 var (
 	ActorPidRespErr         interface{} = &ActorPidResponse{StatusCode: ResponseStatusCodeERROR.ToInt32()}
 	ActorPidRespTimeout     interface{} = &ActorPidResponse{StatusCode: ResponseStatusCodeTIMEOUT.ToInt32()}
 	ActorPidRespUnavailable interface{} = &ActorPidResponse{StatusCode: ResponseStatusCodeUNAVAILABLE.ToInt32()}
+)
+
+type (
+	// Ping is message sent by the actor system to probe an actor is started.
+	Ping struct{}
+
+	// Pong is response for ping.
+	Pong struct{}
 )

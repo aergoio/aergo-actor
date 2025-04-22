@@ -1,36 +1,45 @@
 package remote
 
 import (
-	reflect "reflect"
-
-	"github.com/AsynkronIT/protoactor-go/actor"
+	"github.com/asynkron/protoactor-go/actor"
+	"log/slog"
 )
 
-func newEndpointWatcher(address string) actor.Producer {
+func newEndpointWatcher(remote *Remote, address string) actor.Producer {
 	return func() actor.Actor {
-		return &endpointWatcher{
-			address: address,
+		watcher := &endpointWatcher{
+			behavior: actor.NewBehavior(),
+			address:  address,
+			remote:   remote,
 		}
+		watcher.behavior.Become(watcher.connected)
+		return watcher
 	}
 }
 
 type endpointWatcher struct {
-	address string
-	watched map[string]*actor.PIDSet //key is the watching PID string, value is the watched PID
+	behavior actor.Behavior
+	address  string
+	watched  map[string]*actor.PIDSet // key is the watching PID string, value is the watched PID
+	remote   *Remote
 }
 
 func (state *endpointWatcher) initialize() {
-	plog.Info().Str("address", state.address).Msg("Started EndpointWatcher")
+	state.remote.Logger().Info("Started EndpointWatcher", slog.String("address", state.address))
 	state.watched = make(map[string]*actor.PIDSet)
 }
 
 func (state *endpointWatcher) Receive(ctx actor.Context) {
+	state.behavior.Receive(ctx)
+}
+
+func (state *endpointWatcher) connected(ctx actor.Context) {
 	switch msg := ctx.Message().(type) {
 	case *actor.Started:
 		state.initialize()
 
 	case *remoteTerminate:
-		//delete the watch entries
+		// delete the watch entries
 		if pidSet, ok := state.watched[msg.Watcher.Id]; ok {
 			pidSet.Remove(msg.Watchee)
 			if pidSet.Len() == 0 {
@@ -39,59 +48,60 @@ func (state *endpointWatcher) Receive(ctx actor.Context) {
 		}
 
 		terminated := &actor.Terminated{
-			Who:               msg.Watchee,
-			AddressTerminated: false,
+			Who: msg.Watchee,
+			Why: actor.TerminatedReason_Stopped,
 		}
-		ref, ok := actor.ProcessRegistry.GetLocal(msg.Watcher.Id)
+		ref, ok := state.remote.actorSystem.ProcessRegistry.GetLocal(msg.Watcher.Id)
 		if ok {
 			ref.SendSystemMessage(msg.Watcher, terminated)
 		}
 	case *EndpointConnectedEvent:
-		//Already connected, pass
+		// Already connected, pass
 	case *EndpointTerminatedEvent:
-		plog.Info().Str("address", state.address).Msg("EndpointWatcher handling terminated")
+		state.remote.Logger().Info("EndpointWatcher handling terminated",
+			slog.String("address", state.address), slog.Int("watched", len(state.watched)))
 
 		for id, pidSet := range state.watched {
-			//try to find the watcher ID in the local actor registry
-			ref, ok := actor.ProcessRegistry.GetLocal(id)
+			// try to find the watcher ExtensionID in the local actor registry
+			ref, ok := state.remote.actorSystem.ProcessRegistry.GetLocal(id)
 			if ok {
-				pidSet.ForEach(func(i int, pid actor.PID) {
-					//create a terminated event for the Watched actor
+				pidSet.ForEach(func(i int, pid *actor.PID) {
+					// create a terminated event for the Watched actor
 					terminated := &actor.Terminated{
-						Who:               &pid,
-						AddressTerminated: true,
+						Who: pid,
+						Why: actor.TerminatedReason_AddressTerminated,
 					}
 
-					watcher := actor.NewLocalPID(id)
-					//send the address Terminated event to the Watcher
+					watcher := state.remote.actorSystem.NewLocalPID(id)
+					// send the address Terminated event to the Watcher
 					ref.SendSystemMessage(watcher, terminated)
 				})
 			}
 		}
 
-		//Clear watcher's map
+		// Clear watcher's map
 		state.watched = make(map[string]*actor.PIDSet)
-		ctx.SetBehavior(state.Terminated)
-		ctx.Self().Stop()
+		state.behavior.Become(state.terminated)
+		ctx.Stop(ctx.Self())
 
 	case *remoteWatch:
-		//add watchee to watcher's map
+		// add watchee to watcher's map
 		if pidSet, ok := state.watched[msg.Watcher.Id]; ok {
 			pidSet.Add(msg.Watchee)
 		} else {
 			state.watched[msg.Watcher.Id] = actor.NewPIDSet(msg.Watchee)
 		}
 
-		//recreate the Watch command
+		// recreate the Watch command
 		w := &actor.Watch{
 			Watcher: msg.Watcher,
 		}
 
-		//pass it off to the remote PID
-		SendMessage(msg.Watchee, nil, w, nil, -1)
+		// pass it off to the remote PID
+		state.remote.SendMessage(msg.Watchee, nil, w, nil, -1)
 
 	case *remoteUnwatch:
-		//delete the watch entries
+		// delete the watch entries
 		if pidSet, ok := state.watched[msg.Watcher.Id]; ok {
 			pidSet.Remove(msg.Watchee)
 			if pidSet.Len() == 0 {
@@ -99,45 +109,44 @@ func (state *endpointWatcher) Receive(ctx actor.Context) {
 			}
 		}
 
-		//recreate the Unwatch command
+		// recreate the Unwatch command
 		uw := &actor.Unwatch{
 			Watcher: msg.Watcher,
 		}
 
-		//pass it off to the remote PID
-		SendMessage(msg.Watchee, nil, uw, nil, -1)
+		// pass it off to the remote PID
+		state.remote.SendMessage(msg.Watchee, nil, uw, nil, -1)
 	case actor.SystemMessage, actor.AutoReceiveMessage:
-		//ignore
+		// ignore
 	default:
-		plog.Error().Str("address", state.address).Interface("msg", msg).Msg("EndpointWatcher received unknown message")
+		state.remote.Logger().Error("EndpointWatcher received unknown message", slog.String("address", state.address), slog.Any("message", msg))
 	}
 }
 
-func (state *endpointWatcher) Terminated(ctx actor.Context) {
+func (state *endpointWatcher) terminated(ctx actor.Context) {
 	switch msg := ctx.Message().(type) {
 	case *remoteWatch:
-		//try to find the watcher ID in the local actor registry
-		ref, ok := actor.ProcessRegistry.GetLocal(msg.Watcher.Id)
-		if ok {
+		// try to find the watcher ExtensionID in the local actor registry
+		ref, ok := state.remote.actorSystem.ProcessRegistry.GetLocal(msg.Watcher.Id)
 
-			//create a terminated event for the Watched actor
+		if ok {
+			// create a terminated event for the Watched actor
 			terminated := &actor.Terminated{
-				Who:               msg.Watchee,
-				AddressTerminated: true,
+				Who: msg.Watchee,
+				Why: actor.TerminatedReason_AddressTerminated,
 			}
-			//send the address Terminated event to the Watcher
+			// send the address Terminated event to the Watcher
 			ref.SendSystemMessage(msg.Watcher, terminated)
 		}
 	case *EndpointConnectedEvent:
-		plog.Info().Str("address", state.address).Msg("EndpointWatcher handling restart")
-		ctx.SetBehavior(state.Receive)
+		state.remote.Logger().Info("EndpointWatcher handling restart", slog.String("address", state.address))
+		state.behavior.Become(state.connected)
 	case *remoteTerminate, *EndpointTerminatedEvent, *remoteUnwatch:
 		// pass
-		plog.Error().Str("address", state.address).Interface("msg", msg).Msg("EndpointWatcher receive message for already terminated endpoint")
+		state.remote.Logger().Error("EndpointWatcher receive message for already terminated endpoint", slog.String("address", state.address), slog.Any("message", msg))
 	case actor.SystemMessage, actor.AutoReceiveMessage:
-		//ignore
+		// ignore
 	default:
-		plog.Error().Str("address", state.address).Str("type", reflect.TypeOf(msg).String()).
-			Interface("msg", msg).Msg("EndpointWatcher received unknown message")
+		state.remote.Logger().Error("EndpointWatcher received unknown message", slog.String("address", state.address), slog.Any("message", msg))
 	}
 }

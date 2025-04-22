@@ -5,7 +5,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/AsynkronIT/protoactor-go/actor"
+	"google.golang.org/protobuf/proto"
+
+	"github.com/asynkron/protoactor-go/actor"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -16,6 +18,8 @@ test cases
 */
 
 const ActorName = "demo.actor"
+
+var system = actor.NewActorSystem()
 
 type dataStore struct {
 	providerState ProviderState
@@ -44,15 +48,20 @@ func (p *dataStore) GetState() ProviderState {
 	return p.providerState
 }
 
-type protoMsg struct{ state string }
+type protoMsg struct {
+	proto.Message
+	state string
+}
 
 func (p *protoMsg) Reset()         {}
 func (p *protoMsg) String() string { return p.state }
 func (p *protoMsg) ProtoMessage()  {}
 
-type Message struct{ protoMsg }
-type Snapshot struct{ protoMsg }
-type Query struct{ protoMsg }
+type (
+	Message  struct{ protoMsg }
+	Snapshot struct{ protoMsg }
+	Query    struct{ protoMsg }
+)
 
 func newMessage(state string) *Message {
 	return &Message{protoMsg: protoMsg{state: state}}
@@ -73,8 +82,10 @@ func makeActor() actor.Actor {
 	return &myActor{}
 }
 
-var queryWg sync.WaitGroup
-var queryState string
+var (
+	queryWg    sync.WaitGroup
+	queryState string
+)
 
 func (a *myActor) Receive(ctx actor.Context) {
 	switch msg := ctx.Message().(type) {
@@ -127,40 +138,41 @@ func TestRecovery(t *testing.T) {
 
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("case-%d", i), func(t *testing.T) {
-			props := actor.FromProducer(makeActor).
-				WithMiddleware(Using(tc.init))
-			pid, err := actor.SpawnNamed(props, ActorName)
+			rootContext := system.Root
+			props := actor.PropsFromProducer(makeActor,
+				actor.WithReceiverMiddleware(Using(tc.init)))
+			pid, err := rootContext.SpawnNamed(props, ActorName)
 			require.NoError(t, err)
 
 			// send a bunch of messages
 			for _, msg := range tc.msgs {
-				pid.Tell(newMessage(msg))
+				rootContext.Send(pid, newMessage(msg))
 			}
 
 			// ugly way to block on a response....
 			// TODO: I need some help here
 			queryWg.Add(1)
-			pid.Tell(&Query{})
+			rootContext.Send(pid, &Query{})
 			queryWg.Wait()
 			// check the state after all these messages
 			assert.Equal(t, tc.afterMsgs, queryState)
 
 			// wait for shutdown
-			pid.GracefulPoison()
+			_ = rootContext.PoisonFuture(pid).Wait()
 
-			pid, err = actor.SpawnNamed(props, ActorName)
+			pid, err = rootContext.SpawnNamed(props, ActorName)
 			require.NoError(t, err)
 
 			// ugly way to block on a response....
 			// TODO: I need some help here
 			queryWg.Add(1)
-			pid.Tell(&Query{})
+			rootContext.Send(pid, &Query{})
 			queryWg.Wait()
 			// check the state after all these messages
 			assert.Equal(t, tc.afterMsgs, queryState)
 
 			// shutdown at end of test for cleanup
-			pid.GracefulPoison()
+			_ = rootContext.PoisonFuture(pid).Wait()
 		})
 	}
 }

@@ -3,36 +3,35 @@ package actor
 import (
 	"testing"
 
-	"github.com/AsynkronIT/protoactor-go/eventstream"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestDeadLetterAfterStop(t *testing.T) {
-	a := Spawn(FromProducer(NewBlackHoleActor))
+	a := rootContext.Spawn(PropsFromProducer(NewBlackHoleActor))
 	done := false
-	sub := eventstream.Subscribe(func(msg interface{}) {
+	sub := system.EventStream.Subscribe(func(msg interface{}) {
 		if deadLetter, ok := msg.(*DeadLetterEvent); ok {
 			if deadLetter.PID == a {
 				done = true
 			}
 		}
 	})
-	defer eventstream.Unsubscribe(sub)
+	defer system.EventStream.Unsubscribe(sub)
 
-	a.GracefulStop()
+	_ = rootContext.StopFuture(a).Wait()
 
-	a.Tell("hello")
+	rootContext.Send(a, "hello")
 
 	assert.True(t, done)
 }
 
 func TestDeadLetterWatchRespondsWithTerminate(t *testing.T) {
-	//create an actor
-	pid := Spawn(FromProducer(NewBlackHoleActor))
-	//stop id
-	pid.GracefulStop()
-	f := NewFuture(testTimeout)
-	//send a watch message, from our future
-	pid.sendSystemMessage(&Watch{Watcher: f.PID()})
+	// create an actor
+	pid := rootContext.Spawn(PropsFromProducer(NewBlackHoleActor))
+	// stop id
+	_ = rootContext.StopFuture(pid).Wait()
+	f := NewFuture(system, testTimeout)
+	// send a watch message, from our future
+	pid.sendSystemMessage(system, &Watch{Watcher: f.PID()})
 	assertFutureSuccess(f, t)
 }

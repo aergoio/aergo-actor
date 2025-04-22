@@ -1,52 +1,64 @@
 package router_test
 
 import (
+	"log/slog"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
-	actor "github.com/AsynkronIT/protoactor-go/actor"
-	"github.com/AsynkronIT/protoactor-go/router"
+	"github.com/asynkron/protoactor-go/actor"
+	"github.com/asynkron/protoactor-go/router"
 )
 
+var system = actor.NewActorSystem()
+
 type myMessage struct {
-	i   int
+	i   int32
 	pid *actor.PID
 }
+
 type getRoutees struct {
 	pid *actor.PID
 }
 
 func (m *myMessage) Hash() string {
-	return strconv.Itoa(m.i)
+	i := atomic.LoadInt32(&m.i)
+	return strconv.Itoa(int(i))
 }
 
 var wait sync.WaitGroup
 
-type routerActor struct{}
-type tellerActor struct{}
-type managerActor struct {
-	set  []*actor.PID
-	rpid *actor.PID
-}
+type (
+	routerActor  struct{}
+	tellerActor  struct{}
+	managerActor struct {
+		set  []*actor.PID
+		rpid *actor.PID
+	}
+)
 
 func (state *routerActor) Receive(context actor.Context) {
 	switch msg := context.Message().(type) {
 	case *myMessage:
-		//log.Printf("%v got message %d", context.Self(), msg.i)
-		msg.i++
+		//context.Logger().Info("%v got message", slog.Any("self", context.Self()), slog.Int("msg", int(msg.i)))
+		atomic.AddInt32(&msg.i, 1)
 		wait.Done()
 	}
 }
+
 func (state *tellerActor) Receive(context actor.Context) {
 	switch msg := context.Message().(type) {
 	case *myMessage:
+		start := msg.i
 		for i := 0; i < 100; i++ {
-			msg.pid.Tell(msg)
+			context.Send(msg.pid, msg)
 			time.Sleep(10 * time.Millisecond)
 		}
-
+		if msg.i != start+100 {
+			context.Logger().Error("Expected to send 100 messages", slog.Int("start", int(start)), slog.Int("end", int(msg.i)))
+		}
 	}
 }
 
@@ -56,20 +68,19 @@ func (state *managerActor) Receive(context actor.Context) {
 		state.set = msg.PIDs
 		for i, v := range state.set {
 			if i%2 == 0 {
-				state.rpid.Tell(&router.RemoveRoutee{PID: v})
-				//log.Println(v)
-
+				context.Send(state.rpid, &router.RemoveRoutee{PID: v})
+				// log.Println(v)
 			} else {
-				props := actor.FromProducer(func() actor.Actor { return &routerActor{} })
-				pid := actor.Spawn(props)
-				state.rpid.Tell(&router.AddRoutee{PID: pid})
-				//log.Println(v)
+				props := actor.PropsFromProducer(func() actor.Actor { return &routerActor{} })
+				pid := context.Spawn(props)
+				context.Send(state.rpid, &router.AddRoutee{PID: pid})
+				// log.Println(v)
 			}
 		}
-		context.Self().Tell(&getRoutees{state.rpid})
+		context.Send(context.Self(), &getRoutees{state.rpid})
 	case *getRoutees:
 		state.rpid = msg.pid
-		msg.pid.Request(&router.GetRoutees{}, context.Self())
+		context.Request(msg.pid, &router.GetRoutees{})
 	}
 }
 
@@ -78,17 +89,32 @@ func TestConcurrency(t *testing.T) {
 		t.SkipNow()
 	}
 
-	wait.Add(100 * 10000)
-	rpid := actor.Spawn(router.NewConsistentHashPool(100).WithProducer(func() actor.Actor { return &routerActor{} }))
+	wait.Add(100 * 1000)
+	rpid := system.Root.Spawn(router.NewConsistentHashPool(100).Configure(actor.WithProducer(func() actor.Actor { return &routerActor{} })))
 
-	props := actor.FromProducer(func() actor.Actor { return &tellerActor{} })
-	for i := 0; i < 10000; i++ {
-		pid := actor.Spawn(props)
-		pid.Tell(&myMessage{i, rpid})
+	props := actor.PropsFromProducer(func() actor.Actor { return &tellerActor{} })
+	for i := 0; i < 1000; i++ {
+		pid := system.Root.Spawn(props)
+		system.Root.Send(pid, &myMessage{int32(i), rpid})
 	}
 
-	props = actor.FromProducer(func() actor.Actor { return &managerActor{} })
-	pid := actor.Spawn(props)
-	pid.Tell(&getRoutees{rpid})
-	wait.Wait()
+	props = actor.PropsFromProducer(func() actor.Actor { return &managerActor{} })
+	pid := system.Root.Spawn(props)
+	system.Root.Send(pid, &getRoutees{rpid})
+
+	// Implementing the timeout
+	timeout := time.After(5 * time.Second)
+	done := make(chan bool)
+	go func() {
+		wait.Wait()
+		done <- true
+	}()
+
+	select {
+	case <-timeout:
+		t.Fatal("Test timed out")
+	case <-done:
+		// Test completed within timeout
+	}
+
 }

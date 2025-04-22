@@ -1,16 +1,13 @@
 package remote
 
-var DefaultSerializerID int32 = 0
-var serializers []Serializer
+var (
+	DefaultSerializerID int32
+	serializers         []Serializer
+)
 
 func init() {
 	RegisterSerializer(newProtoSerializer())
 	RegisterSerializer(newJsonSerializer())
-}
-
-func RegisterSerializerAsDefault(serializer Serializer) {
-	serializers = append(serializers, serializer)
-	DefaultSerializerID = int32(len(serializers) - 1)
 }
 
 func RegisterSerializer(serializer Serializer) {
@@ -29,9 +26,26 @@ func Serialize(message interface{}, serializerID int32) ([]byte, string, error) 
 		return nil, "", err
 	}
 	typeName, err := serializers[serializerID].GetTypeName(message)
-	return res, typeName, err
+	if err != nil {
+		return nil, "", err
+	}
+	return res, typeName, nil
 }
 
 func Deserialize(message []byte, typeName string, serializerID int32) (interface{}, error) {
 	return serializers[serializerID].Deserialize(typeName, message)
+}
+
+// RootSerializable is the root level in-process representation of a message
+type RootSerializable interface {
+	// Serialize returns the on-the-wire representation of the message
+	//   Message -> IRootSerialized -> ByteString
+	Serialize() (RootSerialized, error)
+}
+
+// RootSerialized is the root level on-the-wire representation of a message
+type RootSerialized interface {
+	// Deserialize returns the in-process representation of a message
+	//   ByteString -> IRootSerialized -> Message
+	Deserialize() (RootSerializable, error)
 }

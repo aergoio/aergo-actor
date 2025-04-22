@@ -1,26 +1,27 @@
 package plugin
 
 import (
-	"github.com/AsynkronIT/protoactor-go/actor"
+	"github.com/asynkron/protoactor-go/actor"
 )
 
 type plugin interface {
-	OnStart(actor.Context)
-	OnOtherMessage(actor.Context, interface{})
+	OnStart(actor.ReceiverContext)
+	OnOtherMessage(actor.ReceiverContext, *actor.MessageEnvelope)
 }
 
-func Use(plugin plugin) func(next actor.ActorFunc) actor.ActorFunc {
-	return func(next actor.ActorFunc) actor.ActorFunc {
-		fn := func(context actor.Context) {
-			switch msg := context.Message().(type) {
+func Use(plugin plugin) func(next actor.ReceiverFunc) actor.ReceiverFunc {
+	return func(next actor.ReceiverFunc) actor.ReceiverFunc {
+		fn := func(context actor.ReceiverContext, env *actor.MessageEnvelope) {
+			switch env.Message.(type) {
 			case *actor.Started:
 				plugin.OnStart(context)
 			default:
-				plugin.OnOtherMessage(context, msg)
+				plugin.OnOtherMessage(context, env)
 			}
 
-			next(context)
+			next(context, env)
 		}
+
 		return fn
 	}
 }

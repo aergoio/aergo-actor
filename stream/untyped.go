@@ -1,10 +1,11 @@
 package stream
 
-import "github.com/AsynkronIT/protoactor-go/actor"
+import "github.com/asynkron/protoactor-go/actor"
 
 type UntypedStream struct {
-	c   chan interface{}
-	pid *actor.PID
+	c           chan interface{}
+	pid         *actor.PID
+	actorSystem *actor.ActorSystem
 }
 
 func (s *UntypedStream) C() <-chan interface{} {
@@ -16,13 +17,14 @@ func (s *UntypedStream) PID() *actor.PID {
 }
 
 func (s *UntypedStream) Close() {
-	s.pid.Stop()
+	s.actorSystem.Root.Stop(s.pid)
 	close(s.c)
 }
 
-func NewUntypedStream() *UntypedStream {
+func NewUntypedStream(actorSystem *actor.ActorSystem) *UntypedStream {
 	c := make(chan interface{})
-	props := actor.FromFunc(func(ctx actor.Context) {
+
+	props := actor.PropsFromFunc(func(ctx actor.Context) {
 		switch msg := ctx.Message().(type) {
 		case actor.AutoReceiveMessage, actor.SystemMessage:
 		// ignore terminate
@@ -30,10 +32,11 @@ func NewUntypedStream() *UntypedStream {
 			c <- msg
 		}
 	})
-	pid := actor.Spawn(props)
+	pid := actorSystem.Root.Spawn(props)
 
 	return &UntypedStream{
-		c:   c,
-		pid: pid,
+		c:           c,
+		pid:         pid,
+		actorSystem: actorSystem,
 	}
 }

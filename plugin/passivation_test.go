@@ -4,9 +4,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AsynkronIT/protoactor-go/actor"
+	"github.com/asynkron/protoactor-go/actor"
 	"github.com/stretchr/testify/assert"
 )
+
+var system = actor.NewActorSystem()
 
 type SmartActor struct {
 	PassivationHolder
@@ -22,30 +24,31 @@ func TestPassivation(t *testing.T) {
 		t.SkipNow()
 	}
 
-	UnitOfTime := time.Duration(200 * time.Millisecond)
-	PassivationDuration := time.Duration(3 * UnitOfTime)
+	UnitOfTime := 200 * time.Millisecond
+	PassivationDuration := 3 * UnitOfTime
+	rootContext := system.Root
 	props := actor.
-		FromProducer(func() actor.Actor { return &SmartActor{} }).
-		WithMiddleware(Use(&PassivationPlugin{Duration: PassivationDuration}))
+		PropsFromProducer(func() actor.Actor { return &SmartActor{} },
+			actor.WithReceiverMiddleware(Use(&PassivationPlugin{Duration: PassivationDuration})))
 
-	pid := actor.Spawn(props)
+	pid := rootContext.Spawn(props)
 	time.Sleep(UnitOfTime)
 	time.Sleep(UnitOfTime)
 	{
-		_, found := actor.ProcessRegistry.LocalPIDs.Get(pid.Id)
+		_, found := system.ProcessRegistry.GetLocal(pid.Id)
 		assert.True(t, found)
 	}
-	pid.Tell("keepalive")
+	rootContext.Send(pid, "keepalive")
 	time.Sleep(UnitOfTime)
 	time.Sleep(UnitOfTime)
 	{
-		_, found := actor.ProcessRegistry.LocalPIDs.Get(pid.Id)
+		_, found := system.ProcessRegistry.GetLocal(pid.Id)
 		assert.True(t, found)
 	}
 	time.Sleep(UnitOfTime)
 	time.Sleep(UnitOfTime)
 	{
-		_, found := actor.ProcessRegistry.LocalPIDs.Get(pid.Id)
+		_, found := system.ProcessRegistry.GetLocal(pid.Id)
 		assert.False(t, found)
 	}
 }

@@ -1,40 +1,24 @@
 language: go
+sudo: false
+
+env:
+  - GO111MODULE=on
+
+git:
+  depth: 1
 
 go:
-  - "1.10.x"
-
-before_install:
-  - go get -v github.com/golang/lint/golint
-  - go get github.com/AsynkronIT/gonet
-  - go get github.com/AsynkronIT/goconsole
-  - go get github.com/Workiva/go-datastructures
-  - go get github.com/hashicorp/memberlist
-  - go get github.com/hashicorp/consul/api
-  - go get github.com/serialx/hashring
-  - go get github.com/couchbase/gocb
-  - go get github.com/emirpasic/gods/sets/hashset
-  - go get github.com/emirpasic/gods/stacks/linkedliststack
-  - go get github.com/stretchr/testify/assert
-  - go get github.com/orcaman/concurrent-map
-  - go get github.com/gogo/protobuf/proto
-  - go get github.com/gogo/protobuf/protoc-gen-gogo
-  - go get github.com/gogo/protobuf/gogoproto
-  - go get github.com/gogo/protobuf/protoc-gen-gofast
-  - go get google.golang.org/grpc
-  - go get github.com/gogo/protobuf/protoc-gen-gogoslick
-  - go get github.com/chzyer/readline
-  - go get github.com/aergoio/aergo-lib
-  - go get github.com/rs/zerolog
-  - go get github.com/spf13/viper
-  - go get github.com/spf13/pflag
-  - go get github.com/mattn/go-colorable
-  - go get -t github.com/codeclimate/test-reporter
+  - 1.12.x
+  - 1.13.x
+  - tip
 
 before_script:
-  - test-reporter before-build
-  
-script:
-  - go test -short -coverprofile c.out ./...
+  - go get github.com/mattn/goveralls
 
-after_script:
-  - test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
+script:
+  - go test -v -race -short -coverprofile=coverage.out ./...
+  - $GOPATH/bin/goveralls -coverprofile=coverage.out -service=travis-ci
+
+matrix:
+  allow_failures:
+    - go: tip

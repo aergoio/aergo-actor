@@ -1,13 +1,15 @@
 package actor
 
-import "github.com/AsynkronIT/protoactor-go/eventstream"
+import (
+	"time"
+)
 
 // DeciderFunc is a function which is called by a SupervisorStrategy
 type DeciderFunc func(reason interface{}) Directive
 
 // SupervisorStrategy is an interface that decides how to handle failing child actors
 type SupervisorStrategy interface {
-	HandleFailure(supervisor Supervisor, child *PID, rs *RestartStatistics, reason interface{}, message interface{})
+	HandleFailure(actorSystem *ActorSystem, supervisor Supervisor, child *PID, rs *RestartStatistics, reason interface{}, message interface{})
 }
 
 // Supervisor is an interface that is used by the SupervisorStrategy to manage child actor lifecycle
@@ -19,8 +21,8 @@ type Supervisor interface {
 	ResumeChildren(pids ...*PID)
 }
 
-func logFailure(child *PID, reason interface{}, directive Directive) {
-	eventstream.Publish(&SupervisorEvent{
+func logFailure(actorSystem *ActorSystem, child *PID, reason interface{}, directive Directive) {
+	actorSystem.EventStream.Publish(&SupervisorEvent{
 		Child:     child,
 		Reason:    reason,
 		Directive: directive,
@@ -33,7 +35,7 @@ func DefaultDecider(_ interface{}) Directive {
 }
 
 var (
-	defaultSupervisionStrategy    = NewOneForOneStrategy(10, 0, DefaultDecider)
+	defaultSupervisionStrategy    = NewOneForOneStrategy(10, 10*time.Second, DefaultDecider)
 	restartingSupervisionStrategy = NewRestartingStrategy()
 )
 

@@ -2,44 +2,60 @@
 
 all: build
 
+proto:
+	@./buildall.sh
 
-build: protogen
-	go build ./...
+build:
+	@go build ./...
 
-# {{{ Protobuf
-
-# Protobuf definitions
-PROTO_FILES := $(shell find . \( -path "./languages" -o -path "./specification" \) -prune -o -type f -name '*.proto' -print)
-# Protobuf Go files
-PROTO_GEN_FILES = $(patsubst %.proto, %.pb.go, $(PROTO_FILES))
-
-# Protobuf generator
-PROTO_MAKER := protoc --gogoslick_out=Mgoogle/protobuf/any.proto=github.com/gogo/protobuf/types,plugins=grpc:.
-
-protogen: $(PROTO_GEN_FILES)
-
-%.pb.go: %.proto
-	cd $(dir $<); $(PROTO_MAKER) --proto_path=. --proto_path=$(GOPATH)/src ./*.proto
-	sed -i '' -En -e '/^package [[:alpha:]]+/,$$p' $@
-
-# }}} Protobuf end
-
-
-# {{{ Cleanup
-clean: protoclean
-
-protoclean:
-	rm -rf $(PROTO_GEN_FILES)
-# }}} Cleanup end
 
 # {{{ test
 
-PACKAGES := $(shell go list ./... | grep -v "/examples/")
+PACKAGES := $(shell go list ./... | grep -v "/examples/" | grep -v "/persistence" | grep -v "/scheduler")
+
+
+
 
 test:
-	go test $(PACKAGES)
+	@go test $(PACKAGES) -timeout=30s
+
+test2:
+	@go install gotest.tools/gotestsum@latest
+	@gotestsum --format testname $(PACKAGES)
 
 test-short:
-	go test -short $(PACKAGES)
+	@go test $(PACKAGES) -timeout=30s -short
+
+test-race:
+	@go test $(PACKAGES) -timeout=30s -race
+
+lint:
+	@go install github.com/mgechev/revive@latest
+	@revive -formatter friendly $(PACKAGES)
+
+vet:
+	@go vet $(PACKAGES)
+
+bench:
+	@go test $(PACKAGES) -bench=.
 
 # }}} test
+
+# {{{ benchmark
+
+packages_benchmark := $(shell go list ./... | grep -v "/log")
+
+benchmark:
+	go test -benchmem -run=^$ $(packages_benchmark) -bench ^Benchmark$(t).*$
+# }}}
+
+# {{{ docker-env
+root_dir := $(abspath $(CURDIR)/)
+docker-env:
+	sudo docker run -it --rm \
+		-v $(root_dir)/:/go/src/AsncronIT/protoactor-go \
+		-w /go/src/AsncronIT/protoactor-go \
+		-e GOPATH=/go \
+		--entrypoint /bin/bash \
+		cupen/protoc:3.9.1-1
+# }}}

@@ -2,9 +2,8 @@ package router
 
 import (
 	"sync/atomic"
-	"unsafe"
 
-	"github.com/AsynkronIT/protoactor-go/actor"
+	"github.com/asynkron/protoactor-go/actor"
 )
 
 type roundRobinGroupRouter struct {
@@ -18,13 +17,15 @@ type roundRobinPoolRouter struct {
 type roundRobinState struct {
 	index   int32
 	routees *actor.PIDSet
-	values  *[]actor.PID
+	sender  actor.SenderContext
+}
+
+func (state *roundRobinState) SetSender(sender actor.SenderContext) {
+	state.sender = sender
 }
 
 func (state *roundRobinState) SetRoutees(routees *actor.PIDSet) {
 	state.routees = routees
-	values := routees.Values()
-	atomic.SwapPointer((*unsafe.Pointer)(unsafe.Pointer(&state.values)), unsafe.Pointer(&values))
 }
 
 func (state *roundRobinState) GetRoutees() *actor.PIDSet {
@@ -32,33 +33,35 @@ func (state *roundRobinState) GetRoutees() *actor.PIDSet {
 }
 
 func (state *roundRobinState) RouteMessage(message interface{}) {
-	pid := roundRobinRoutee(&state.index, *state.values)
-	pid.Tell(message)
+	pid := roundRobinRoutee(&state.index, state.routees)
+	state.sender.Send(pid, message)
 }
 
-func NewRoundRobinPool(size int) *actor.Props {
-	return actor.FromSpawnFunc(spawner(&roundRobinPoolRouter{PoolRouter{PoolSize: size}}))
+func NewRoundRobinPool(size int, opts ...actor.PropsOption) *actor.Props {
+	return (&actor.Props{}).
+		Configure(actor.WithSpawnFunc(spawner(&roundRobinPoolRouter{PoolRouter{PoolSize: size}}))).
+		Configure(opts...)
 }
 
 func NewRoundRobinGroup(routees ...*actor.PID) *actor.Props {
-	return actor.FromSpawnFunc(spawner(&roundRobinGroupRouter{GroupRouter{Routees: actor.NewPIDSet(routees...)}}))
+	return (&actor.Props{}).Configure(actor.WithSpawnFunc(spawner(&roundRobinGroupRouter{GroupRouter{Routees: actor.NewPIDSet(routees...)}})))
 }
 
-func (config *roundRobinPoolRouter) CreateRouterState() Interface {
+func (config *roundRobinPoolRouter) CreateRouterState() State {
 	return &roundRobinState{}
 }
 
-func (config *roundRobinGroupRouter) CreateRouterState() Interface {
+func (config *roundRobinGroupRouter) CreateRouterState() State {
 	return &roundRobinState{}
 }
 
-func roundRobinRoutee(index *int32, routees []actor.PID) actor.PID {
+func roundRobinRoutee(index *int32, routees *actor.PIDSet) *actor.PID {
 	i := int(atomic.AddInt32(index, 1))
 	if i < 0 {
 		*index = 0
 		i = 0
 	}
-	mod := len(routees)
-	routee := routees[i%mod]
+	mod := routees.Len()
+	routee := routees.Get(i % mod)
 	return routee
 }

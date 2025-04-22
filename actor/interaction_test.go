@@ -7,20 +7,22 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type DummyMessage struct{}
-type BlackHoleActor struct{}
+type (
+	DummyMessage   struct{}
+	BlackHoleActor struct{}
+)
 
 var testTimeout = 1 * time.Second
 
-func (state *BlackHoleActor) Receive(context Context) {}
+func (state *BlackHoleActor) Receive(Context) {}
 
 func NewBlackHoleActor() Actor {
 	return &BlackHoleActor{}
 }
 
 func TestSpawnProducesProcess(t *testing.T) {
-	actor := Spawn(FromProducer(NewBlackHoleActor))
-	defer actor.Stop()
+	actor := rootContext.Spawn(PropsFromProducer(NewBlackHoleActor))
+	defer rootContext.Stop(actor)
 	assert.NotNil(t, actor)
 }
 
@@ -42,9 +44,9 @@ func (*EchoActor) Receive(context Context) {
 }
 
 func TestActorCanReplyToMessage(t *testing.T) {
-	pid := Spawn(FromProducer(NewEchoActor))
-	defer pid.Stop()
-	err := pid.RequestFuture(EchoRequest{}, testTimeout).Wait()
+	pid := rootContext.Spawn(PropsFromProducer(NewEchoActor))
+	defer rootContext.Stop(pid)
+	err := rootContext.RequestFuture(pid, EchoRequest{}, testTimeout).Wait()
 	if err != nil {
 		assert.Fail(t, "timed out")
 		return

@@ -1,20 +1,20 @@
 package remote
 
 import (
-	fmt "fmt"
 	"runtime"
 	"sync/atomic"
 
-	"github.com/AsynkronIT/protoactor-go/internal/queue/goring"
-	"github.com/AsynkronIT/protoactor-go/internal/queue/mpsc"
-	"github.com/AsynkronIT/protoactor-go/mailbox"
-	"github.com/aergoio/aergo-lib/log"
+	"github.com/asynkron/protoactor-go/actor"
+
+	"github.com/asynkron/protoactor-go/internal/queue/goring"
+	"github.com/asynkron/protoactor-go/internal/queue/mpsc"
 )
 
 const (
 	mailboxIdle    int32 = iota
 	mailboxRunning int32 = iota
 )
+
 const (
 	mailboxHasNoMessages   int32 = iota
 	mailboxHasMoreMessages int32 = iota
@@ -25,14 +25,14 @@ type endpointWriterMailbox struct {
 	systemMailbox   *mpsc.Queue
 	schedulerStatus int32
 	hasMoreMessages int32
-	invoker         mailbox.MessageInvoker
+	invoker         actor.MessageInvoker
 	batchSize       int
-	dispatcher      mailbox.Dispatcher
+	dispatcher      actor.Dispatcher
 	suspended       bool
 }
 
 func (m *endpointWriterMailbox) PostUserMessage(message interface{}) {
-	//batching mailbox only use the message part
+	// batching mailbox only use the message part
 	m.userMailbox.Push(message)
 	m.schedule()
 }
@@ -46,15 +46,23 @@ func (m *endpointWriterMailbox) Len() int32 {
 	return atomic.LoadInt32(&m.hasMoreMessages)
 }
 
+func (m *endpointWriterMailbox) RegisterHandlers(invoker actor.MessageInvoker, dispatcher actor.Dispatcher) {
+	m.invoker = invoker
+	m.dispatcher = dispatcher
+}
+
+func (m *endpointWriterMailbox) Start() {
+}
+
 func (m *endpointWriterMailbox) schedule() {
-	atomic.StoreInt32(&m.hasMoreMessages, mailboxHasMoreMessages) //we have more messages to process
+	atomic.StoreInt32(&m.hasMoreMessages, mailboxHasMoreMessages) // we have more messages to process
 	if atomic.CompareAndSwapInt32(&m.schedulerStatus, mailboxIdle, mailboxRunning) {
 		m.dispatcher.Schedule(m.processMessages)
 	}
 }
 
 func (m *endpointWriterMailbox) processMessages() {
-	//we are about to start processing messages, we can safely reset the message flag of the mailbox
+	// we are about to start processing messages, we can safely reset the message flag of the mailbox
 	atomic.StoreInt32(&m.hasMoreMessages, mailboxHasNoMessages)
 process:
 	m.run()
@@ -75,15 +83,6 @@ func (m *endpointWriterMailbox) run() {
 	var msg interface{}
 	defer func() {
 		if r := recover(); r != nil {
-			// Unix's skip call stack is 6
-			// it has 2 more stacks (panic.go:63 & signal_unix.go:388) than windows's stack
-			skipStack := 6
-			if runtime.GOOS == "windows" {
-				skipStack = 4
-			}
-			plog.Debug().Str("receiver", fmt.Sprintf("%s", m.invoker)).Interface("reason", r).
-				Str("panic_at", log.PanicInvoker(skipStack)).Msg("Recovering from panic")
-
 			m.invoker.EscalateFailure(r, msg)
 		}
 	}()
@@ -92,9 +91,9 @@ func (m *endpointWriterMailbox) run() {
 		// keep processing system messages until queue is empty
 		if msg = m.systemMailbox.Pop(); msg != nil {
 			switch msg.(type) {
-			case *mailbox.SuspendMailbox:
+			case *actor.SuspendMailbox:
 				m.suspended = true
-			case *mailbox.ResumeMailbox:
+			case *actor.ResumeMailbox:
 				m.suspended = false
 			default:
 				m.invoker.InvokeSystemMessage(msg)
@@ -119,8 +118,12 @@ func (m *endpointWriterMailbox) run() {
 	}
 }
 
-func newEndpointWriterMailbox(batchSize, initialSize int) mailbox.Producer {
-	return func(invoker mailbox.MessageInvoker, dispatcher mailbox.Dispatcher) mailbox.Inbound {
+func (m *endpointWriterMailbox) UserMessageCount() int {
+	return int(m.userMailbox.Length())
+}
+
+func endpointWriterMailboxProducer(batchSize, initialSize int) actor.MailboxProducer {
+	return func() actor.Mailbox {
 		userMailbox := goring.New(int64(initialSize))
 		systemMailbox := mpsc.New()
 		return &endpointWriterMailbox{
@@ -129,11 +132,6 @@ func newEndpointWriterMailbox(batchSize, initialSize int) mailbox.Producer {
 			hasMoreMessages: mailboxHasNoMessages,
 			schedulerStatus: mailboxIdle,
 			batchSize:       batchSize,
-			invoker:         invoker,
-			dispatcher:      dispatcher,
 		}
 	}
-}
-
-func (m *endpointWriterMailbox) Start() {
 }

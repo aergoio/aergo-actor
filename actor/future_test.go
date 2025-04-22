@@ -17,7 +17,7 @@ func TestFuture_PipeTo_Message(t *testing.T) {
 		removeMockProcess(a3)
 	}()
 
-	f := NewFuture(1 * time.Second)
+	f := NewFuture(system, 1*time.Second)
 
 	p1.On("SendUserMessage", a1, "hello")
 	p2.On("SendUserMessage", a2, "hello")
@@ -27,7 +27,7 @@ func TestFuture_PipeTo_Message(t *testing.T) {
 	f.PipeTo(a2)
 	f.PipeTo(a3)
 
-	ref, _ := ProcessRegistry.Get(f.pid)
+	ref, _ := system.ProcessRegistry.Get(f.pid)
 	assert.IsType(t, &futureProcess{}, ref)
 	fp, _ := ref.(*futureProcess)
 
@@ -52,8 +52,8 @@ func TestFuture_PipeTo_TimeoutSendsError(t *testing.T) {
 	p2.On("SendUserMessage", a2, ErrTimeout)
 	p3.On("SendUserMessage", a3, ErrTimeout)
 
-	f := NewFuture(10 * time.Millisecond)
-	ref, _ := ProcessRegistry.Get(f.pid)
+	f := NewFuture(system, 10*time.Millisecond)
+	ref, _ := system.ProcessRegistry.Get(f.pid)
 
 	f.PipeTo(a1)
 	f.PipeTo(a2)
@@ -71,8 +71,49 @@ func TestFuture_PipeTo_TimeoutSendsError(t *testing.T) {
 	assert.Empty(t, fp.pipes, "pipes were not cleared")
 }
 
+func TestNewFuture_TimeoutNoRace(t *testing.T) {
+
+	future := NewFuture(system, 1*time.Microsecond)
+	a := rootContext.Spawn(PropsFromFunc(func(context Context) {
+		switch context.Message().(type) {
+		case *Started:
+			context.Send(future.PID(), EchoResponse{})
+		}
+	}))
+	_ = rootContext.StopFuture(a).Wait()
+	_, _ = future.Result()
+}
+
 func assertFutureSuccess(future *Future, t *testing.T) interface{} {
 	res, err := future.Result()
 	assert.NoError(t, err, "timed out")
 	return res
+}
+
+func TestFuture_Result_DeadLetterResponse(t *testing.T) {
+	a := assert.New(t)
+
+	future := NewFuture(system, 1*time.Second)
+	rootContext.Send(future.PID(), &DeadLetterResponse{})
+	resp, err := future.Result()
+	a.Equal(ErrDeadLetter, err)
+	a.Nil(resp)
+}
+
+func TestFuture_Result_Timeout(t *testing.T) {
+	a := assert.New(t)
+
+	future := NewFuture(system, 1*time.Second)
+	resp, err := future.Result()
+	a.Equal(ErrTimeout, err)
+	a.Nil(resp)
+}
+
+func TestFuture_Result_Success(t *testing.T) {
+	a := assert.New(t)
+
+	future := NewFuture(system, 1*time.Second)
+	rootContext.Send(future.PID(), EchoResponse{})
+	resp := assertFutureSuccess(future, t)
+	a.Equal(EchoResponse{}, resp)
 }

@@ -1,8 +1,8 @@
 package persistence
 
 import (
-	"github.com/AsynkronIT/protoactor-go/actor"
-	proto "github.com/golang/protobuf/proto"
+	"github.com/asynkron/protoactor-go/actor"
+	"google.golang.org/protobuf/proto"
 )
 
 type persistent interface {
@@ -32,10 +32,11 @@ func (mixin *Mixin) Recovering() bool {
 func (mixin *Mixin) Name() string {
 	return mixin.name
 }
+
 func (mixin *Mixin) PersistReceive(message proto.Message) {
 	mixin.providerState.PersistEvent(mixin.Name(), mixin.eventIndex, message)
 	if mixin.eventIndex%mixin.providerState.GetSnapshotInterval() == 0 {
-		mixin.receiver.Receive(&RequestSnapshot{})
+		mixin.receiver.Receive(&actor.MessageEnvelope{Message: &RequestSnapshot{}})
 	}
 	mixin.eventIndex++
 }
@@ -59,16 +60,16 @@ func (mixin *Mixin) init(provider Provider, context actor.Context) {
 	mixin.providerState.Restart()
 	if snapshot, eventIndex, ok := mixin.providerState.GetSnapshot(mixin.Name()); ok {
 		mixin.eventIndex = eventIndex
-		receiver.Receive(snapshot)
+		receiver.Receive(&actor.MessageEnvelope{Message: snapshot})
 	}
-	mixin.providerState.GetEvents(mixin.Name(), mixin.eventIndex, func(e interface{}) {
-		receiver.Receive(e)
+	mixin.providerState.GetEvents(mixin.Name(), mixin.eventIndex, 0 /* 0 means max */, func(e interface{}) {
+		receiver.Receive(&actor.MessageEnvelope{Message: e})
 		mixin.eventIndex++
 	})
 	mixin.recovering = false
-	receiver.Receive(&ReplayComplete{})
+	receiver.Receive(&actor.MessageEnvelope{Message: &ReplayComplete{}})
 }
 
 type receiver interface {
-	Receive(message interface{})
+	Receive(message *actor.MessageEnvelope)
 }

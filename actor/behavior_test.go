@@ -6,62 +6,58 @@ import (
 
 type BehaviorMessage struct{}
 
-type EchoSetBehaviorActor struct{}
+type EchoSetBehaviorActor struct {
+	behavior Behavior
+}
 
 func NewEchoBehaviorActor() Actor {
-	return &EchoSetBehaviorActor{}
+	state := &EchoSetBehaviorActor{
+		behavior: NewBehavior(),
+	}
+	state.behavior.Become(state.one)
+
+	return state
 }
 
 func (state *EchoSetBehaviorActor) Receive(context Context) {
-	switch context.Message().(type) {
-	case BehaviorMessage:
-		context.SetBehavior(state.Other)
+	state.behavior.Receive(context)
+}
+
+func (state *EchoSetBehaviorActor) one(context Context) {
+	if _, ok := context.Message().(BehaviorMessage); ok {
+		state.behavior.Become(state.other)
 	}
 }
 
-func (EchoSetBehaviorActor) Other(context Context) {
-	switch context.Message().(type) {
-	case EchoRequest:
+func (EchoSetBehaviorActor) other(context Context) {
+	if _, ok := context.Message().(EchoRequest); ok {
 		context.Respond(EchoResponse{})
 	}
 }
 
 func TestActorCanSetBehavior(t *testing.T) {
-	pid := Spawn(FromProducer(NewEchoBehaviorActor))
-	defer pid.Stop()
-	pid.Tell(BehaviorMessage{})
-	fut := pid.RequestFuture(EchoRequest{}, testTimeout)
+	pid := rootContext.Spawn(PropsFromProducer(NewEchoBehaviorActor))
+	defer rootContext.Stop(pid)
+	rootContext.Send(pid, BehaviorMessage{})
+	fut := rootContext.RequestFuture(pid, EchoRequest{}, testTimeout)
 	assertFutureSuccess(fut, t)
 }
 
 type PopBehaviorMessage struct{}
 
-type EchoPopBehaviorActor struct{}
-
 func NewEchoUnbecomeActor() Actor {
-	return &EchoSetBehaviorActor{}
-}
-
-func (state *EchoPopBehaviorActor) Receive(context Context) {
-	switch context.Message().(type) {
-	case BehaviorMessage:
-		context.PushBehavior(state.Other)
-	case EchoRequest:
-		context.Respond(EchoResponse{})
+	state := &EchoSetBehaviorActor{
+		behavior: NewBehavior(),
 	}
-}
+	state.behavior.Become(state.one)
 
-func (*EchoPopBehaviorActor) Other(context Context) {
-	switch context.Message().(type) {
-	case PopBehaviorMessage:
-		context.PopBehavior()
-	}
+	return state
 }
 
 func TestActorCanPopBehavior(t *testing.T) {
-	a := Spawn(FromProducer(NewEchoUnbecomeActor))
-	a.Tell(BehaviorMessage{})
-	a.Tell(PopBehaviorMessage{})
-	fut := a.RequestFuture(EchoRequest{}, testTimeout)
+	a := rootContext.Spawn(PropsFromProducer(NewEchoUnbecomeActor))
+	rootContext.Send(a, BehaviorMessage{})
+	rootContext.Send(a, PopBehaviorMessage{})
+	fut := rootContext.RequestFuture(a, EchoRequest{}, testTimeout)
 	assertFutureSuccess(fut, t)
 }

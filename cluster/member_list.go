@@ -1,62 +1,88 @@
 package cluster
 
 import (
+	"context"
+	"log/slog"
 	"sync"
 
-	"github.com/AsynkronIT/protoactor-go/eventstream"
-	"github.com/AsynkronIT/protoactor-go/remote"
+	"github.com/asynkron/protoactor-go/actor"
+	"github.com/asynkron/protoactor-go/eventstream"
+	"github.com/asynkron/protoactor-go/remote"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
-var memberList *memberListValue
-
-// memberListValue is responsible to keep track of the current cluster topology
+// MemberList is responsible to keep track of the current cluster topology
 // it does so by listening to changes from the ClusterProvider.
 // the default ClusterProvider is consul.ConsulProvider which uses the Consul HTTP API to scan for changes
-type memberListValue struct {
-	mutex                *sync.RWMutex
-	members              map[string]*MemberStatus
+type MemberList struct {
+	cluster              *Cluster
+	mutex                sync.RWMutex
+	members              *MemberSet
 	memberStrategyByKind map[string]MemberStrategy
 
-	membershipSub *eventstream.Subscription
+	eventSteam        *eventstream.EventStream
+	topologyConsensus ConsensusHandler
 }
 
-func setupMemberList() {
-	memberList = &memberListValue{
-		mutex:                &sync.RWMutex{},
-		members:              make(map[string]*MemberStatus),
+func NewMemberList(cluster *Cluster) *MemberList {
+	memberList := &MemberList{
+		cluster:              cluster,
+		members:              emptyMemberSet,
 		memberStrategyByKind: make(map[string]MemberStrategy),
+		eventSteam:           cluster.ActorSystem.EventStream,
 	}
-
-	memberList.membershipSub = eventstream.
-		Subscribe(memberList.updateClusterTopology).
-		WithPredicate(func(m interface{}) bool {
-			_, ok := m.(ClusterTopologyEvent)
-			return ok
-		})
-}
-
-func stopMemberList() {
-	eventstream.Unsubscribe(memberList.membershipSub)
-	memberList = nil
-}
-
-func (ml *memberListValue) getMembers(kind string) []string {
-	ml.mutex.RLock()
-	defer ml.mutex.RUnlock()
-
-	res := make([]string, 0)
-	if memberStrategy, ok := ml.memberStrategyByKind[kind]; ok {
-		members := memberStrategy.GetAllMembers()
-		for _, m := range members {
-			if m.Alive {
-				res = append(res, m.Address())
+	memberList.eventSteam.Subscribe(func(evt interface{}) {
+		switch t := evt.(type) {
+		case *GossipUpdate:
+			if t.Key != "topology" {
+				break
 			}
+
+			// get blocked members from all other member states
+			// and merge that without own blocked set
+			var topology ClusterTopology
+			if err := t.Value.UnmarshalTo(&topology); err != nil {
+				cluster.Logger().Warn("could not unpack into ClusterTopology proto.Message form Any", slog.Any("error", err))
+
+				break
+			}
+			blocked := topology.Blocked
+			memberList.cluster.Remote.BlockList().Block(blocked...)
 		}
-	}
-	return res
+	})
+
+	return memberList
 }
 
-func (ml *memberListValue) getPartitionMember(name, kind string) string {
+func (ml *MemberList) stopMemberList() {
+	// ml.cluster.ActorSystem.EventStream.Unsubscribe(ml.membershipSub)
+}
+
+func (ml *MemberList) InitializeTopologyConsensus() {
+	ml.topologyConsensus = ml.cluster.Gossip.RegisterConsensusCheck("topology", func(any *anypb.Any) interface{} {
+		var topology ClusterTopology
+		if unpackErr := any.UnmarshalTo(&topology); unpackErr != nil {
+			ml.cluster.Logger().Error("could not unpack topology message", slog.Any("error", unpackErr))
+
+			return nil
+		}
+
+		return topology.TopologyHash
+	})
+}
+
+func (ml *MemberList) TopologyConsensus(ctx context.Context) (uint64, bool) {
+	result, ok := ml.topologyConsensus.TryGetConsensus(ctx)
+	if ok {
+		res, _ := result.(uint64)
+
+		return res, true
+	}
+
+	return 0, false
+}
+
+func (ml *MemberList) getPartitionMember(name, kind string) string {
 	ml.mutex.RLock()
 	defer ml.mutex.RUnlock()
 
@@ -64,146 +90,170 @@ func (ml *memberListValue) getPartitionMember(name, kind string) string {
 	if memberStrategy, ok := ml.memberStrategyByKind[kind]; ok {
 		res = memberStrategy.GetPartition(name)
 	}
+
 	return res
 }
 
-func (ml *memberListValue) getActivatorMember(kind string) string {
+func (ml *MemberList) getPartitionMemberV2(clusterIdentity *ClusterIdentity) string {
+	ml.mutex.RLock()
+	defer ml.mutex.RUnlock()
+
+	if ms, ok := ml.memberStrategyByKind[clusterIdentity.Kind]; ok {
+		return ms.GetPartition(clusterIdentity.Identity)
+	}
+
+	return ""
+}
+
+func (ml *MemberList) GetActivatorMember(kind string, requestSourceAddress string) string {
 	ml.mutex.RLock()
 	defer ml.mutex.RUnlock()
 
 	var res string
 	if memberStrategy, ok := ml.memberStrategyByKind[kind]; ok {
-		res = memberStrategy.GetActivator()
+		res = memberStrategy.GetActivator(requestSourceAddress)
 	}
+
 	return res
 }
 
-func (ml *memberListValue) updateClusterTopology(m interface{}) {
+func (ml *MemberList) Length() int {
+	return ml.members.Len()
+}
 
+func (ml *MemberList) Members() *MemberSet {
+	return ml.members
+}
+
+func (ml *MemberList) UpdateClusterTopology(members Members) {
 	ml.mutex.Lock()
 	defer ml.mutex.Unlock()
 
-	msg, _ := m.(ClusterTopologyEvent)
+	// TLDR:
+	// this method basically filters out any member status in the blocked list
+	// then makes a delta between new and old members
+	// notifying the cluster accordingly which members left or joined
 
-	//build a lookup for the new statuses
-	tmp := make(map[string]*MemberStatus)
-	for _, new := range msg {
-		tmp[new.Address()] = new
+	topology, done, active, joined, left := ml.getTopologyChanges(members)
+	if done {
+		return
 	}
 
-	//first remove old ones
-	for key, old := range ml.members {
-		new := tmp[key]
-		if new == nil {
-			ml.updateAndNotify(new, old)
+	// include any new blocked members into the known set of blocked members
+	for _, m := range left.Members() {
+		ml.cluster.Remote.BlockList().Block(m.Id)
+	}
+
+	ml.members = active
+
+	// notify that these members left
+	for _, m := range left.Members() {
+		ml.memberLeave(m)
+		ml.TerminateMember(m)
+	}
+
+	// notify that these members joined
+	for _, m := range joined.Members() {
+		ml.memberJoin(m)
+	}
+
+	ml.cluster.ActorSystem.EventStream.Publish(topology)
+
+	ml.cluster.Logger().Info("Updated ClusterTopology",
+		slog.Uint64("topology-hash", topology.TopologyHash),
+		slog.Int("members", len(topology.Members)),
+		slog.Int("joined", len(topology.Joined)),
+		slog.Int("left", len(topology.Left)),
+		slog.Int("blocked", len(topology.Blocked)),
+		slog.Int("membersFromProvider", len(members)))
+}
+
+func (ml *MemberList) memberJoin(joiningMember *Member) {
+	ml.cluster.Logger().Info("member joined", slog.String("member", joiningMember.Id))
+
+	for _, kind := range joiningMember.Kinds {
+		if ml.memberStrategyByKind[kind] == nil {
+			ml.memberStrategyByKind[kind] = ml.getMemberStrategyByKind(kind)
 		}
-	}
 
-	//find all the entries that exist in the new set
-	for key, new := range tmp {
-		old := ml.members[key]
-		ml.members[key] = new
-		ml.updateAndNotify(new, old)
+		ml.memberStrategyByKind[kind].AddMember(joiningMember)
 	}
 }
 
-func (ml *memberListValue) updateAndNotify(new *MemberStatus, old *MemberStatus) {
+func (ml *MemberList) memberLeave(leavingMember *Member) {
+	for _, kind := range leavingMember.Kinds {
+		if ml.memberStrategyByKind[kind] == nil {
+			continue
+		}
 
-	if new == nil && old == nil {
-		//ignore, not possible
-		return
+		ml.memberStrategyByKind[kind].RemoveMember(leavingMember)
 	}
-	if new == nil {
-		//update MemberStrategy
-		for _, k := range old.Kinds {
-			if s, ok := ml.memberStrategyByKind[k]; ok {
-				s.RemoveMember(old)
-				if len(s.GetAllMembers()) == 0 {
-					delete(ml.memberStrategyByKind, k)
-				}
-			}
-		}
+}
 
-		//notify left
-		meta := MemberMeta{
-			Host:  old.Host,
-			Port:  old.Port,
-			Kinds: old.Kinds,
-		}
-		left := &MemberLeftEvent{MemberMeta: meta}
-		eventstream.Publish(left)
-		delete(ml.members, old.Address()) //remove this member as it has left
+func (ml *MemberList) getTopologyChanges(members Members) (topology *ClusterTopology, unchanged bool, active *MemberSet, joined *MemberSet, left *MemberSet) {
+	memberSet := NewMemberSet(members)
 
-		rt := &remote.EndpointTerminatedEvent{
-			Address: old.Address(),
-		}
-		eventstream.Publish(rt)
+	// get active members
+	// (this bit means that we will never allow a member that failed a health check to join back in)
+	blocked := ml.cluster.GetBlockedMembers().ToSlice()
 
-		return
-	}
-	if old == nil {
-		//update MemberStrategy
-		for _, k := range new.Kinds {
-			if _, ok := ml.memberStrategyByKind[k]; !ok {
-				ml.memberStrategyByKind[k] = cfg.MemberStrategyBuilder(k)
-			}
-			ml.memberStrategyByKind[k].AddMember(new)
-		}
+	active = memberSet.ExceptIds(blocked)
 
-		//notify joined
-		meta := MemberMeta{
-			Host:  new.Host,
-			Port:  new.Port,
-			Kinds: new.Kinds,
-		}
-		joined := &MemberJoinedEvent{MemberMeta: meta}
-		eventstream.Publish(joined)
-
-		return
+	// nothing changed? exit
+	if active.Equals(ml.members) {
+		return nil, true, nil, nil, nil
 	}
 
-	//update MemberStrategy
-	if new.Alive != old.Alive || new.MemberID != old.MemberID || new.StatusValue != nil && !new.StatusValue.IsSame(old.StatusValue) {
-		for _, k := range new.Kinds {
-			if _, ok := ml.memberStrategyByKind[k]; !ok {
-				ml.memberStrategyByKind[k] = cfg.MemberStrategyBuilder(k)
-			}
-			ml.memberStrategyByKind[k].UpdateMember(new)
+	left = ml.members.Except(active)
+	joined = active.Except(ml.members)
+
+	topology = &ClusterTopology{
+		TopologyHash: active.TopologyHash(),
+		Members:      active.Members(),
+		Left:         left.Members(),
+		Joined:       joined.Members(),
+	}
+
+	return topology, false, active, joined, left
+}
+
+func (ml *MemberList) TerminateMember(m *Member) {
+	// tell the world that this endpoint should is no longer relevant
+	ml.cluster.ActorSystem.EventStream.Publish(&remote.EndpointTerminatedEvent{
+		Address: m.Address(),
+	})
+}
+
+func (ml *MemberList) BroadcastEvent(message interface{}, includeSelf bool) {
+	for _, m := range ml.members.members {
+		if !includeSelf && m.Id == ml.cluster.ActorSystem.ID {
+			continue
+		}
+
+		pid := actor.NewPID(m.Address(), "eventstream")
+		ml.cluster.ActorSystem.Root.Send(pid, message)
+	}
+}
+
+func (ml *MemberList) ContainsMemberID(memberID string) bool {
+	return ml.members.ContainsID(memberID)
+}
+
+func (ml *MemberList) getMemberStrategyByKind(kind string) MemberStrategy {
+	ml.cluster.Logger().Info("creating member strategy", slog.String("kind", kind))
+
+	clusterKind, ok := ml.cluster.TryGetClusterKind(kind)
+
+	if ok {
+		if clusterKind.Strategy != nil {
+			return clusterKind.Strategy
 		}
 	}
 
-	if new.MemberID != old.MemberID {
-		//notify member rejoined
-		meta := MemberMeta{
-			Host:  new.Host,
-			Port:  new.Port,
-			Kinds: new.Kinds,
-		}
-		joined := &MemberRejoinedEvent{MemberMeta: meta}
-		eventstream.Publish(joined)
+	strategy := ml.cluster.Config.MemberStrategyBuilder(ml.cluster, kind)
+	if strategy != nil {
+		return strategy
+	}
 
-		return
-	}
-	if old.Alive && !new.Alive {
-		//notify member unavailable
-		meta := MemberMeta{
-			Host:  new.Host,
-			Port:  new.Port,
-			Kinds: new.Kinds,
-		}
-		unavailable := &MemberUnavailableEvent{MemberMeta: meta}
-		eventstream.Publish(unavailable)
-
-		return
-	}
-	if !old.Alive && new.Alive {
-		//notify member reachable
-		meta := MemberMeta{
-			Host:  new.Host,
-			Port:  new.Port,
-			Kinds: new.Kinds,
-		}
-		available := &MemberAvailableEvent{MemberMeta: meta}
-		eventstream.Publish(available)
-	}
+	return newDefaultMemberStrategy(ml.cluster, kind)
 }

@@ -1,117 +1,68 @@
 package cluster
 
 import (
-	"github.com/AsynkronIT/protoactor-go/actor"
-	"github.com/AsynkronIT/protoactor-go/eventstream"
-	"github.com/orcaman/concurrent-map"
+	"github.com/asynkron/protoactor-go/actor"
+	cmap "github.com/orcaman/concurrent-map"
 )
 
-var pidCache *pidCacheValue
-
-type pidCacheValue struct {
-	cache        cmap.ConcurrentMap
-	reverseCache cmap.ConcurrentMap
-
-	watcher         *actor.PID
-	memberStatusSub *eventstream.Subscription
+type PidCacheValue struct {
+	cache cmap.ConcurrentMap
 }
 
-func setupPidCache() {
-	pidCache = &pidCacheValue{
-		cache:        cmap.New(),
-		reverseCache: cmap.New(),
+func NewPidCache() *PidCacheValue {
+	pidCache := &PidCacheValue{
+		cache: cmap.New(),
 	}
 
-	props := actor.FromProducer(newPidCacheWatcher()).WithGuardian(actor.RestartingSupervisorStrategy())
-	pidCache.watcher, _ = actor.SpawnNamed(props, "PidCacheWatcher")
-
-	pidCache.memberStatusSub = eventstream.Subscribe(pidCache.onMemberStatusEvent).
-		WithPredicate(func(m interface{}) bool {
-			_, ok := m.(MemberStatusEvent)
-			return ok
-		})
+	return pidCache
 }
 
-func stopPidCache() {
-	pidCache.watcher.GracefulStop()
-	eventstream.Unsubscribe(pidCache.memberStatusSub)
-	pidCache = nil
+func key(identity string, kind string) string {
+	return identity + "." + kind
 }
 
-func (c *pidCacheValue) onMemberStatusEvent(evn interface{}) {
-	switch msEvn := evn.(type) {
-	case *MemberLeftEvent:
-		address := msEvn.Name()
-		c.removeCacheByMemberAddress(address)
-	case *MemberRejoinedEvent:
-		address := msEvn.Name()
-		c.removeCacheByMemberAddress(address)
-	}
-}
+func (c *PidCacheValue) Get(identity string, kind string) (*actor.PID, bool) {
+	k := key(identity, kind)
+	v, ok := c.cache.Get(k)
 
-func (c *pidCacheValue) getCache(name string) (*actor.PID, bool) {
-	v, ok := c.cache.Get(name)
 	if !ok {
 		return nil, false
 	}
+
 	return v.(*actor.PID), true
 }
 
-func (c *pidCacheValue) addCache(name string, pid *actor.PID) bool {
-	if c.cache.SetIfAbsent(name, pid) {
-		key := pid.String()
-		c.reverseCache.Set(key, name)
-		//watch the pid so we know if the node or pid dies
-		c.watcher.Tell(&watchPidRequest{pid})
-		return true
-	}
-	return false
+func (c *PidCacheValue) Set(identity string, kind string, pid *actor.PID) {
+	k := key(identity, kind)
+	c.cache.Set(k, pid)
 }
 
-func (c *pidCacheValue) removeCacheByPid(pid *actor.PID) {
-	key := pid.String()
-	if name, ok := c.reverseCache.Get(key); ok {
-		c.cache.Remove(name.(string))
-		c.reverseCache.Remove(key)
-	}
-}
+func (c *PidCacheValue) RemoveByValue(identity string, kind string, pid *actor.PID) {
+	k := key(identity, kind)
 
-func (c *pidCacheValue) removeCacheByName(name string) {
-	if pid, ok := c.cache.Get(name); ok {
-		key := pid.(*actor.PID).String()
-		c.cache.Remove(name)
-		c.reverseCache.Remove(key)
-	}
-}
-
-func (c *pidCacheValue) removeCacheByMemberAddress(address string) {
-	for item := range c.cache.IterBuffered() {
-		name := item.Key
-		pid := item.Val.(*actor.PID)
-		if pid.Address == address {
-			c.cache.Remove(name)
-			c.reverseCache.Remove(pid.String())
+	c.cache.RemoveCb(k, func(key string, v interface{}, exists bool) bool {
+		if !exists {
+			return false
 		}
-	}
+
+		existing, _ := v.(*actor.PID)
+
+		return existing.Equal(pid)
+	})
 }
 
-type watchPidRequest struct {
-	pid *actor.PID
+func (c *PidCacheValue) Remove(identity string, kind string) {
+	k := key(identity, kind)
+	c.cache.Remove(k)
 }
 
-type pidCacheWatcherActor struct{}
+func (c *PidCacheValue) RemoveByMember(member *Member) {
+	addr := member.Address()
 
-func newPidCacheWatcher() actor.Producer {
-	return func() actor.Actor {
-		return &pidCacheWatcherActor{}
-	}
-}
-
-func (a *pidCacheWatcherActor) Receive(ctx actor.Context) {
-	switch msg := ctx.Message().(type) {
-	case *watchPidRequest:
-		ctx.Watch(msg.pid)
-	case *actor.Terminated:
-		pidCache.removeCacheByPid(msg.Who)
+	for item := range c.cache.IterBuffered() {
+		pid, _ := item.Val.(*actor.PID)
+		if pid.Address == addr {
+			c.cache.Remove(item.Key)
+		}
 	}
 }

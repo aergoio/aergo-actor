@@ -3,41 +3,28 @@ package remote
 import (
 	"errors"
 	"fmt"
-	"reflect"
+	"log/slog"
 	"time"
 
-	"github.com/AsynkronIT/protoactor-go/actor"
+	"github.com/asynkron/protoactor-go/actor"
 )
-
-var (
-	nameLookup   = make(map[string]actor.Props)
-	activatorPid *actor.PID
-)
-
-func spawnActivatorActor() {
-	props := actor.FromProducer(newActivatorActor()).WithGuardian(actor.RestartingSupervisorStrategy())
-	activatorPid, _ = actor.SpawnNamed(props, "activator")
-}
-
-func stopActivatorActor() {
-	activatorPid.GracefulStop()
-}
 
 // Register a known actor props by name
-func Register(kind string, props *actor.Props) {
-	nameLookup[kind] = *props
+func (r *Remote) Register(kind string, props *actor.Props) {
+	r.kinds[kind] = props
 }
 
-// GetKnownKinds returns a slice of known actor "kinds"
-func GetKnownKinds() []string {
-	keys := make([]string, 0, len(nameLookup))
-	for k := range nameLookup {
+// GetKnownKinds returns a slice of known actor "Kinds"
+func (r *Remote) GetKnownKinds() []string {
+	keys := make([]string, 0, len(r.kinds))
+	for k := range r.kinds {
 		keys = append(keys, k)
 	}
 	return keys
 }
 
 type activator struct {
+	remote *Remote
 }
 
 // ErrActivatorUnavailable : this error will not panic the Activator.
@@ -55,15 +42,15 @@ func (e *ActivatorError) Error() string {
 }
 
 // ActivatorForAddress returns a PID for the activator at the given address
-func ActivatorForAddress(address string) *actor.PID {
+func (r *Remote) ActivatorForAddress(address string) *actor.PID {
 	pid := actor.NewPID(address, "activator")
 	return pid
 }
 
 // SpawnFuture spawns a remote actor and returns a Future that completes once the actor is started
-func SpawnFuture(address, name, kind string, timeout time.Duration) *actor.Future {
-	activator := ActivatorForAddress(address)
-	f := activator.RequestFuture(&ActorPidRequest{
+func (r *Remote) SpawnFuture(address, name, kind string, timeout time.Duration) *actor.Future {
+	activator := r.ActivatorForAddress(address)
+	f := r.actorSystem.Root.RequestFuture(activator, &ActorPidRequest{
 		Name: name,
 		Kind: kind,
 	}, timeout)
@@ -71,17 +58,13 @@ func SpawnFuture(address, name, kind string, timeout time.Duration) *actor.Futur
 }
 
 // Spawn spawns a remote actor of a given type at a given address
-func Spawn(address, kind string, timeout time.Duration) (*ActorPidResponse, error) {
-	return SpawnNamed(address, "", kind, timeout)
+func (r *Remote) Spawn(address, kind string, timeout time.Duration) (*ActorPidResponse, error) {
+	return r.SpawnNamed(address, "", kind, timeout)
 }
 
 // SpawnNamed spawns a named remote actor of a given type at a given address
-func SpawnNamed(address, name, kind string, timeout time.Duration) (*ActorPidResponse, error) {
-	activator := ActivatorForAddress(address)
-	res, err := activator.RequestFuture(&ActorPidRequest{
-		Name: name,
-		Kind: kind,
-	}, timeout).Result()
+func (r *Remote) SpawnNamed(address, name, kind string, timeout time.Duration) (*ActorPidResponse, error) {
+	res, err := r.SpawnFuture(address, name, kind, timeout).Result()
 	if err != nil {
 		return nil, err
 	}
@@ -93,26 +76,40 @@ func SpawnNamed(address, name, kind string, timeout time.Duration) (*ActorPidRes
 	}
 }
 
-func newActivatorActor() actor.Producer {
+func newActivatorActor(remote *Remote) actor.Producer {
 	return func() actor.Actor {
-		return &activator{}
+		return &activator{
+			remote: remote,
+		}
 	}
 }
 
-func (*activator) Receive(context actor.Context) {
+func (a *activator) Receive(context actor.Context) {
 	switch msg := context.Message().(type) {
 	case *actor.Started:
-		plog.Debug().Msg("Started Activator")
+		context.Logger().Info("Started Activator")
+	case *Ping:
+		context.Respond(&Pong{})
 	case *ActorPidRequest:
-		props := nameLookup[msg.Kind]
-		name := msg.Name
+		props, exist := a.remote.kinds[msg.Kind]
 
-		//unnamed actor, assign auto ID
-		if name == "" {
-			name = actor.ProcessRegistry.NextId()
+		// if props not exist, return error and panic
+		if !exist {
+			response := &ActorPidResponse{
+				StatusCode: ResponseStatusCodeERROR.ToInt32(),
+			}
+			context.Respond(response)
+			panic(fmt.Errorf("no Props found for kind %s", msg.Kind))
 		}
 
-		pid, err := actor.SpawnNamed(&props, "Remote$"+name)
+		name := msg.Name
+
+		// unnamed actor, assign auto ExtensionID
+		if name == "" {
+			name = context.ActorSystem().ProcessRegistry.NextId()
+		}
+
+		pid, err := context.SpawnNamed(props, "Remote$"+name)
 
 		if err == nil {
 			response := &ActorPidResponse{Pid: pid}
@@ -139,9 +136,8 @@ func (*activator) Receive(context actor.Context) {
 			panic(err)
 		}
 	case actor.SystemMessage, actor.AutoReceiveMessage:
-		//ignore
+		// ignore
 	default:
-		plog.Error().Str("type", reflect.TypeOf(msg).String()).Interface("msg", msg).
-			Msg("Activator received unknown message")
+		context.Logger().Error("Activator received unknown message", slog.Any("message", msg))
 	}
 }

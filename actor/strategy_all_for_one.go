@@ -21,38 +21,39 @@ type allForOneStrategy struct {
 	decider        DeciderFunc
 }
 
-func (strategy *allForOneStrategy) HandleFailure(supervisor Supervisor, child *PID, rs *RestartStatistics, reason interface{}, message interface{}) {
+var _ SupervisorStrategy = &allForOneStrategy{}
+
+func (strategy *allForOneStrategy) HandleFailure(actorSystem *ActorSystem, supervisor Supervisor, child *PID, rs *RestartStatistics, reason interface{}, message interface{}) {
 	directive := strategy.decider(reason)
 	switch directive {
 	case ResumeDirective:
-		//resume the failing child
-		logFailure(child, reason, directive)
+		// resume the failing child
+		logFailure(actorSystem, child, reason, directive)
 		supervisor.ResumeChildren(child)
 	case RestartDirective:
 		children := supervisor.Children()
-		//try restart the all the children
+		// try restart the all the children
 		if strategy.shouldStop(rs) {
-			logFailure(child, reason, StopDirective)
+			logFailure(actorSystem, child, reason, StopDirective)
 			supervisor.StopChildren(children...)
 		} else {
-			logFailure(child, reason, RestartDirective)
+			logFailure(actorSystem, child, reason, RestartDirective)
 			supervisor.RestartChildren(children...)
 		}
 	case StopDirective:
 		children := supervisor.Children()
-		//stop all the children, no need to involve the crs
-		logFailure(child, reason, directive)
+		// stop all the children, no need to involve the crs
+		logFailure(actorSystem, child, reason, directive)
 		supervisor.StopChildren(children...)
 	case EscalateDirective:
-		//send failure to parent
-		//supervisor mailbox
-		//do not log here, log in the parent handling the error
+		// send failure to parent
+		// supervisor mailbox
+		// do not log here, log in the parent handling the error
 		supervisor.EscalateFailure(reason, message)
 	}
 }
 
 func (strategy *allForOneStrategy) shouldStop(rs *RestartStatistics) bool {
-
 	// supervisor says this child may not restart
 	if strategy.maxNrOfRetries == 0 {
 		return true

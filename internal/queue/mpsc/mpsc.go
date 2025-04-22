@@ -2,7 +2,6 @@
 //
 // The Push function is safe to call from multiple goroutines. The Pop and Empty APIs must only be
 // called from a single, consumer goroutine.
-//
 package mpsc
 
 // This implementation is based on http://www.1024cores.net/home/lock-free-algorithms/queues/non-intrusive-mpsc-node-based-queue
@@ -33,12 +32,13 @@ func New() *Queue {
 //
 // Push can be safely called from multiple goroutines
 func (q *Queue) Push(x interface{}) {
-	n := &node{val: x}
+	n := new(node)
+	n.val = x
 	// current producer acquires head node
 	prev := (*node)(atomic.SwapPointer((*unsafe.Pointer)(unsafe.Pointer(&q.head)), unsafe.Pointer(n)))
 
 	// release node to consumer
-	prev.next = n
+	atomic.StorePointer((*unsafe.Pointer)(unsafe.Pointer(&prev.next)), unsafe.Pointer(n))
 }
 
 // Pop removes the item from the front of the queue or nil if the queue is empty

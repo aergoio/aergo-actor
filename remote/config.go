@@ -1,68 +1,59 @@
 package remote
 
-import "google.golang.org/grpc"
+import (
+	"fmt"
 
-//RemotingOption configures how the remote infrastructure is started
-type RemotingOption func(*remoteConfig)
+	"github.com/asynkron/protoactor-go/actor"
+	"google.golang.org/grpc"
+)
 
-func defaultRemoteConfig() *remoteConfig {
-	return &remoteConfig{
-		dialOptions:              []grpc.DialOption{grpc.WithInsecure()},
-		endpointWriterBatchSize:  1000,
-		endpointManagerBatchSize: 1000,
-		endpointWriterQueueSize:  1000000,
-		endpointManagerQueueSize: 1000000,
+func defaultConfig() *Config {
+	return &Config{
+		AdvertisedHost:           "",
+		DialOptions:              []grpc.DialOption{grpc.WithInsecure()},
+		EndpointWriterBatchSize:  1000,
+		EndpointManagerBatchSize: 1000,
+		EndpointWriterQueueSize:  1000000,
+		EndpointManagerQueueSize: 1000000,
+		Kinds:                    make(map[string]*actor.Props),
+		MaxRetryCount:            5,
 	}
 }
 
-func WithEndpointWriterBatchSize(batchSize int) RemotingOption {
-	return func(config *remoteConfig) {
-		config.endpointWriterBatchSize = batchSize
+func newConfig(options ...ConfigOption) *Config {
+	config := defaultConfig()
+	for _, option := range options {
+		option(config)
 	}
+	return config
 }
 
-func WithEndpointWriterQueueSize(queueSize int) RemotingOption {
-	return func(config *remoteConfig) {
-		config.endpointWriterQueueSize = queueSize
-	}
+// Address returns the address of the remote
+func (rc Config) Address() string {
+	return fmt.Sprintf("%v:%v", rc.Host, rc.Port)
 }
 
-func WithEndpointManagerBatchSize(batchSize int) RemotingOption {
-	return func(config *remoteConfig) {
-		config.endpointManagerBatchSize = batchSize
-	}
+// Configure configures the remote
+func Configure(host string, port int, options ...ConfigOption) *Config {
+	c := newConfig(options...)
+	c.Host = host
+	c.Port = port
+
+	return c
 }
 
-func WithEndpointManagerQueueSize(queueSize int) RemotingOption {
-	return func(config *remoteConfig) {
-		config.endpointManagerQueueSize = queueSize
-	}
-}
-
-func WithDialOptions(options ...grpc.DialOption) RemotingOption {
-	return func(config *remoteConfig) {
-		config.dialOptions = options
-	}
-}
-
-func WithServerOptions(options ...grpc.ServerOption) RemotingOption {
-	return func(config *remoteConfig) {
-		config.serverOptions = options
-	}
-}
-
-func WithCallOptions(options ...grpc.CallOption) RemotingOption {
-	return func(config *remoteConfig) {
-		config.callOptions = options
-	}
-}
-
-type remoteConfig struct {
-	serverOptions            []grpc.ServerOption
-	callOptions              []grpc.CallOption
-	dialOptions              []grpc.DialOption
-	endpointWriterBatchSize  int
-	endpointWriterQueueSize  int
-	endpointManagerBatchSize int
-	endpointManagerQueueSize int
+// Config is the configuration for the remote
+type Config struct {
+	Host                     string
+	Port                     int
+	AdvertisedHost           string
+	ServerOptions            []grpc.ServerOption
+	CallOptions              []grpc.CallOption
+	DialOptions              []grpc.DialOption
+	EndpointWriterBatchSize  int
+	EndpointWriterQueueSize  int
+	EndpointManagerBatchSize int
+	EndpointManagerQueueSize int
+	Kinds                    map[string]*actor.Props
+	MaxRetryCount            int
 }

@@ -3,25 +3,28 @@ package eventstream_test
 import (
 	"fmt"
 
-	"github.com/AsynkronIT/protoactor-go/eventstream"
+	"github.com/asynkron/protoactor-go/eventstream"
 )
 
 // Subscribe subscribes to events
-func ExampleSubscribe() {
-	sub := eventstream.Subscribe(func(event interface{}) {
+func ExampleEventStream_Subscribe() {
+	es := eventstream.NewEventStream()
+	handler := func(event interface{}) {
 		fmt.Println(event)
-	})
+	}
 
 	// only allow strings
-	sub.WithPredicate(func(evt interface{}) bool {
-		_, ok := evt.(string)
+	predicate := func(event interface{}) bool {
+		_, ok := event.(string)
 		return ok
-	})
+	}
 
-	eventstream.Publish("Hello World")
-	eventstream.Publish(1)
+	sub := es.SubscribeWithPredicate(handler, predicate)
 
-	eventstream.Unsubscribe(sub)
+	es.Publish("Hello World")
+	es.Publish(1)
+
+	es.Unsubscribe(sub)
 
 	// Output: Hello World
 }

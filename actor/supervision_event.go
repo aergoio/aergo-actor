@@ -1,9 +1,7 @@
 package actor
 
 import (
-	"fmt"
-
-	"github.com/AsynkronIT/protoactor-go/eventstream"
+	"log/slog"
 )
 
 // SupervisorEvent is sent on the EventStream when a supervisor have applied a directive to a failing child actor
@@ -13,15 +11,10 @@ type SupervisorEvent struct {
 	Directive Directive
 }
 
-var (
-	supervisionSubscriber *eventstream.Subscription
-)
-
-func init() {
-	supervisionSubscriber = eventstream.Subscribe(func(evt interface{}) {
+func SubscribeSupervision(actorSystem *ActorSystem) {
+	_ = actorSystem.EventStream.Subscribe(func(evt interface{}) {
 		if supervisorEvent, ok := evt.(*SupervisorEvent); ok {
-			plog.Debug().Interface("reason", supervisorEvent.Reason).Interface("receiver", supervisorEvent.Child).
-				Interface("directive", fmt.Stringer(supervisorEvent.Directive).String()).Msg("Supervisor handles a failing child")
+			actorSystem.Logger().Debug("[SUPERVISION]", slog.Any("actor", supervisorEvent.Child), slog.Any("directive", supervisorEvent.Directive), slog.Any("reason", supervisorEvent.Reason))
 		}
 	})
 }
