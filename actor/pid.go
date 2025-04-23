@@ -42,11 +42,6 @@ func (pid *PID) ref(actorSystem *ActorSystem) Process {
 	return ref
 }
 
-// MsgNum returns a number of messages those are queued in mailbox
-func (pid *PID) MsgNum() int32 {
-	return 0
-}
-
 // sendUserMessage sends a messages asynchronously to the PID.
 //
 //goland:noinspection GoReceiverNames

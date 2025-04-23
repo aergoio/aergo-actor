@@ -101,7 +101,3 @@ func (ref *process) Poison(pid *actor.PID) {
 	ref.actorSystem.ProcessRegistry.Remove(pid)
 	ref.SendSystemMessage(pid, &actor.Stop{})
 }
-
-func (ref *process) MsgNum() int32 {
-	return ref.router.MsgNum()
-}

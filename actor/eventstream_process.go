@@ -22,7 +22,3 @@ func (e *EventStreamProcess) SendSystemMessage(_ *PID, _ interface{}) {
 func (e *EventStreamProcess) Stop(_ *PID) {
 	// pass
 }
-
-func (e *EventStreamProcess) MsgNum() int32 {
-	return 0
-}

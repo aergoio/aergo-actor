@@ -1,7 +1,3 @@
-[![Go Report Card](https://goreportcard.com/badge/github.com/aergoio/aergo-actor)](https://goreportcard.com/report/github.com/aergoio/aergo-actor) 
-[![Build Status](https://travis-ci.org/aergoio/aergo-actor.svg?branch=develop)](https://travis-ci.org/aergoio/aergo-actor)
-[![Maintainability](https://api.codeclimate.com/v1/badges/11a4c64e60e053dc6e50/maintainability)](https://codeclimate.com/github/aergoio/aergo-actor/maintainability)
-
 [![Go Report Card](https://goreportcard.com/badge/github.com/asynkron/protoactor-go)](https://goreportcard.com/report/github.com/asynkron/protoactor-go)
 [![GoDoc](https://godoc.org/github.com/asynkron/protoactor-go?status.svg)](https://godoc.org/github.com/asynkron/protoactor-go)
 [![checks](https://github.com/asynkron/protoactor-go/actions/workflows/checks.yml/badge.svg)](https://github.com/asynkron/protoactor-go/actions/workflows/checks.yml)

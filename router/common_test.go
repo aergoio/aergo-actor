@@ -42,10 +42,6 @@ func (m *mockContext) Get(id ctxext.ContextExtensionID) ctxext.ContextExtension 
 func (m *mockContext) Set(ext ctxext.ContextExtension) {
 	m.Called(ext)
 }
-func (m *mockProcess) MsgNum() int32 {
-	m.Called()
-	return 0
-}
 
 func (m *mockContext) ActorSystem() *actor.ActorSystem {
 	args := m.Called()

@@ -103,7 +103,7 @@ func (a *myActor) Receive(ctx actor.Context) {
 		// Set state to whatever message says
 		a.state = msg.state
 	case *Query:
-		// TODO: this is poorly written...
+		// TODO: this is poorly writen...
 		// I have no idea how to synchronously block on the
 		// receipt of a message for test cases.
 		queryState = a.state

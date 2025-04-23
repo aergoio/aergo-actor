@@ -104,7 +104,3 @@ func (dp *deadLetterProcess) SendSystemMessage(pid *PID, message interface{}) {
 func (dp *deadLetterProcess) Stop(pid *PID) {
 	dp.SendSystemMessage(pid, stopMessage)
 }
-
-func (ref *deadLetterProcess) MsgNum() int32 {
-	return 0
-}

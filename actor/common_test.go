@@ -216,8 +216,3 @@ func (m *mockProcess) SendSystemMessage(pid *PID, message interface{}) {
 func (m *mockProcess) Stop(pid *PID) {
 	m.Called(pid)
 }
-
-func (m *mockProcess) MsgNum() int32 {
-	m.Called()
-	return 0
-}

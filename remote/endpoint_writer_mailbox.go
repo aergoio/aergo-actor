@@ -42,10 +42,6 @@ func (m *endpointWriterMailbox) PostSystemMessage(message interface{}) {
 	m.schedule()
 }
 
-func (m *endpointWriterMailbox) Len() int32 {
-	return atomic.LoadInt32(&m.hasMoreMessages)
-}
-
 func (m *endpointWriterMailbox) RegisterHandlers(invoker actor.MessageInvoker, dispatcher actor.Dispatcher) {
 	m.invoker = invoker
 	m.dispatcher = dispatcher
